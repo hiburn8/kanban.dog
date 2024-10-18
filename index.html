@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🐶</title>
+    <style>
+        /* Monokai Color Scheme Variables */
+        :root {
+            --background-color: #272822;
+            --foreground-color: #F8F8F2;
+            --column-background: #3B3A32;
+            --task-background: #49483E;
+            --highlight-color: #A6E22E; /* Green */
+            --button-background: #66D9EF; /* Blue */
+            --button-hover-background: #57C7E3;
+            --delete-color: #F92672; /* Red */
+            --move-btn-color: #FD971F; /* Orange */
+            --border-color: #75715E;
+            --editable-border: #E6DB74; /* Yellow */
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: var(--background-color);
+            color: var(--foreground-color);
+        }
+        h1 {
+            text-align: center;
+            color: var(--highlight-color);
+        }
+        #addColumnBtn {
+            display: block;
+            margin: 0 auto 20px auto;
+            padding: 10px 20px;
+            background-color: var(--button-background);
+            color: var(--foreground-color);
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        #addColumnBtn:hover {
+            background-color: var(--button-hover-background);
+        }
+        .board {
+            display: flex;
+            align-items: flex-start;
+            overflow-x: auto;
+        }
+        .column {
+            background-color: var(--column-background);
+            border-radius: 3px;
+            width: 250px;
+            margin: 0 10px;
+            padding: 10px;
+            flex-shrink: 0;
+            position: relative;
+        }
+        .column-header {
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--highlight-color);
+        }
+        .column-header span {
+            cursor: pointer;
+            word-break: break-word;
+        }
+        .task-list {
+            min-height: 100px;
+        }
+        .task {
+            background-color: var(--task-background);
+            border-radius: 3px;
+            padding: 10px;
+            margin-bottom: 10px;
+            cursor: move;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--foreground-color);
+        }
+        .task span {
+            flex-grow: 1;
+            cursor: pointer;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            overflow: hidden;
+        }
+        button {
+            background-color: var(--button-background);
+            border: none;
+            color: var(--foreground-color);
+            padding: 5px 10px;
+            margin-top: 5px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+        button:hover {
+            background-color: var(--button-hover-background);
+        }
+        .delete-btn {
+            background-color: transparent;
+            border: none;
+            color: var(--delete-color);
+            font-size: 16px;
+            cursor: pointer;
+            padding: 0 5px;
+        }
+        .delete-btn:hover {
+            color: #ff5f7f;
+        }
+        .move-btn {
+            background-color: transparent;
+            border: none;
+            color: var(--move-btn-color);
+            font-size: 16px;
+            cursor: pointer;
+            padding: 0 5px;
+        }
+        .move-btn:hover {
+            color: #e58a00;
+        }
+        .drag-over {
+            background-color: #3E3D32;
+        }
+        .task-buttons {
+            display: flex;
+            flex-shrink: 0;
+            align-items: center;
+        }
+        .arrow-btn {
+            background-color: transparent;
+            border: none;
+            color: var(--move-btn-color);
+            font-size: 16px;
+            cursor: pointer;
+            padding: 0 5px;
+        }
+        .arrow-btn:hover {
+            color: #e58a00;
+        }
+        .editable {
+            border-bottom: 1px dashed var(--editable-border);
+        }
+        .editable:focus {
+            outline: none;
+            border-bottom: 1px solid var(--highlight-color);
+        }
+    </style>
+</head>
+<body>
+    <h1>🐶</h1>
+    <button id="addColumnBtn">Add Column</button>
+    <div id="board" class="board">
+        <!-- Columns will be added here dynamically -->
+    </div>
+
+    <script>
+        let columns = [];
+
+        // Load columns from local storage or initialize default columns
+        function loadColumns() {
+            const savedColumns = localStorage.getItem('columns');
+            if (savedColumns) {
+                columns = JSON.parse(savedColumns);
+            } else {
+                columns = [
+                    { id: 1, name: 'To Do', tasks:
+                        [{"id":1729251148441,"name":"Walkies"}]
+                    },
+                    { id: 2, name: 'In Progress', tasks: [] },
+                    { id: 3, name: 'Done 🎉', tasks:
+                        [{"id":1729251148442,"name":"Make a Kanban"}]
+                    },
+                    { id: 4, name: 'Blocked', tasks:
+                        [{"id":1729251148443,"name":"Become an Astronaut"}]
+                    },
+                ];
+            }
+        }
+
+        // Save columns to local storage
+        function saveColumns() {
+            localStorage.setItem('columns', JSON.stringify(columns));
+        }
+
+        function renderBoard() {
+            const board = document.getElementById('board');
+            board.innerHTML = '';
+            columns.forEach((column, columnIndex) => {
+                const columnDiv = document.createElement('div');
+                columnDiv.className = 'column';
+                columnDiv.dataset.columnId = column.id;
+
+                const header = document.createElement('div');
+                header.className = 'column-header';
+
+                const headerTitle = document.createElement('span');
+                headerTitle.textContent = column.name;
+                headerTitle.className = 'editable';
+                headerTitle.contentEditable = true;
+                headerTitle.onblur = () => updateColumnName(column.id, headerTitle.textContent.trim());
+                headerTitle.onkeydown = (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        headerTitle.blur();
+                    }
+                };
+
+                const headerButtons = document.createElement('div');
+
+                const moveLeftBtn = document.createElement('button');
+                moveLeftBtn.textContent = '←';
+                moveLeftBtn.className = 'move-btn';
+                moveLeftBtn.onclick = () => moveColumnLeft(column.id);
+                if (columnIndex === 0) {
+                    moveLeftBtn.disabled = true;
+                    moveLeftBtn.style.visibility = 'hidden';
+                    moveLeftBtn.style.cursor = 'default';
+                }
+
+                const moveRightBtn = document.createElement('button');
+                moveRightBtn.textContent = '→';
+                moveRightBtn.className = 'move-btn';
+                moveRightBtn.onclick = () => moveColumnRight(column.id);
+                if (columnIndex === columns.length - 1) {
+                    moveRightBtn.disabled = true;
+                    moveRightBtn.style.visibility = 'hidden';
+                    moveRightBtn.style.cursor = 'default';
+                }
+
+                const deleteColumnBtn = document.createElement('button');
+                deleteColumnBtn.textContent = 'X';
+                deleteColumnBtn.className = 'delete-btn';
+                deleteColumnBtn.onclick = () => deleteColumn(column.id);
+
+                headerButtons.appendChild(moveLeftBtn);
+                headerButtons.appendChild(moveRightBtn);
+                headerButtons.appendChild(deleteColumnBtn);
+
+                header.appendChild(headerTitle);
+                header.appendChild(headerButtons);
+
+                const addTaskBtn = document.createElement('button');
+                addTaskBtn.textContent = 'Add Task';
+                addTaskBtn.onclick = () => addTask(column.id);
+
+                const taskList = document.createElement('div');
+                taskList.className = 'task-list';
+                taskList.dataset.columnId = column.id;
+                taskList.ondrop = onDrop;
+                taskList.ondragover = onDragOver;
+                taskList.ondragenter = onDragEnter;
+                taskList.ondragleave = onDragLeave;
+
+                column.tasks.forEach((task, taskIndex) => {
+                    const taskDiv = document.createElement('div');
+                    taskDiv.className = 'task';
+                    taskDiv.draggable = true;
+                    taskDiv.dataset.taskId = task.id;
+                    taskDiv.dataset.columnId = column.id;
+                    taskDiv.ondragstart = onDragStart;
+
+                    const taskContent = document.createElement('span');
+                    taskContent.textContent = task.name;
+                    taskContent.className = 'editable';
+                    taskContent.contentEditable = true;
+                    taskContent.onblur = () => updateTaskName(column.id, task.id, taskContent.textContent.trim());
+                    taskContent.onkeydown = (e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            taskContent.blur();
+                        }
+                    };
+
+                    const deleteTaskBtn = document.createElement('button');
+                    deleteTaskBtn.textContent = 'X';
+                    deleteTaskBtn.className = 'delete-btn';
+                    deleteTaskBtn.onclick = () => deleteTask(column.id, task.id);
+
+                    const upArrowBtn = document.createElement('button');
+                    upArrowBtn.textContent = '↑';
+                    upArrowBtn.className = 'arrow-btn';
+                    upArrowBtn.onclick = () => moveTaskUp(column.id, task.id);
+                    if (taskIndex === 0) {
+                        upArrowBtn.disabled = true;
+                        upArrowBtn.style.visibility = 'hidden';
+                        upArrowBtn.style.cursor = 'default';
+                    }
+
+                    const downArrowBtn = document.createElement('button');
+                    downArrowBtn.textContent = '↓';
+                    downArrowBtn.className = 'arrow-btn';
+                    downArrowBtn.onclick = () => moveTaskDown(column.id, task.id);
+                    if (taskIndex === column.tasks.length - 1) {
+                        downArrowBtn.disabled = true;
+                        downArrowBtn.style.visibility = 'hidden';
+                        downArrowBtn.style.cursor = 'default';
+                    }
+
+                    const taskButtonsContainer = document.createElement('div');
+                    taskButtonsContainer.className = 'task-buttons';
+
+                    if (taskIndex > 0) {
+                        taskButtonsContainer.appendChild(upArrowBtn);
+                    } else {
+                        upArrowBtn.disabled = true;
+                        upArrowBtn.style.visibility = 'hidden';
+                        upArrowBtn.style.cursor = 'default';
+                        taskButtonsContainer.appendChild(upArrowBtn);
+                    }
+
+                    if (taskIndex < column.tasks.length - 1) {
+                        taskButtonsContainer.appendChild(downArrowBtn);
+                    } else {
+                        downArrowBtn.disabled = true;
+                        downArrowBtn.style.visibility = 'hidden';
+                        downArrowBtn.style.cursor = 'default';
+                        taskButtonsContainer.appendChild(downArrowBtn);
+                    }
+
+                    taskButtonsContainer.appendChild(deleteTaskBtn);
+
+                    taskDiv.appendChild(taskContent);
+                    taskDiv.appendChild(taskButtonsContainer);
+
+                    taskList.appendChild(taskDiv);
+                });
+
+                columnDiv.appendChild(header);
+                columnDiv.appendChild(addTaskBtn);
+                columnDiv.appendChild(taskList);
+
+                board.appendChild(columnDiv);
+            });
+        }
+
+        function updateTaskName(columnId, taskId, newName) {
+            if (newName === '') {
+                alert('Task name cannot be empty.');
+                renderBoard();
+                return;
+            }
+            const column = columns.find(col => col.id == columnId);
+            const task = column.tasks.find(task => task.id == taskId);
+            if (task) {
+                task.name = newName;
+                saveColumns();
+            }
+        }
+
+        function updateColumnName(columnId, newName) {
+            if (newName === '') {
+                alert('Column name cannot be empty.');
+                renderBoard();
+                return;
+            }
+            const column = columns.find(col => col.id == columnId);
+            if (column) {
+                column.name = newName;
+                saveColumns();
+            }
+        }
+
+        function addTask(columnId) {
+            const taskName = prompt('Enter task name:');
+            if (taskName) {
+                const column = columns.find(col => col.id == columnId);
+                const newTask = { id: Date.now(), name: taskName };
+                column.tasks.push(newTask);
+                saveColumns();
+                renderBoard();
+            }
+        }
+
+        function deleteTask(columnId, taskId) {
+            const column = columns.find(col => col.id == columnId);
+            const index = column.tasks.findIndex(task => task.id == taskId);
+            if (index > -1) {
+                column.tasks.splice(index, 1);
+                saveColumns();
+                renderBoard();
+            }
+        }
+
+        function moveTaskUp(columnId, taskId) {
+            const column = columns.find(col => col.id == columnId);
+            const index = column.tasks.findIndex(task => task.id == taskId);
+            if (index > 0) {
+                [column.tasks[index - 1], column.tasks[index]] = [column.tasks[index], column.tasks[index - 1]];
+                saveColumns();
+                renderBoard();
+            }
+        }
+
+        function moveTaskDown(columnId, taskId) {
+            const column = columns.find(col => col.id == columnId);
+            const index = column.tasks.findIndex(task => task.id == taskId);
+            if (index < column.tasks.length - 1) {
+                [column.tasks[index], column.tasks[index + 1]] = [column.tasks[index + 1], column.tasks[index]];
+                saveColumns();
+                renderBoard();
+            }
+        }
+
+        function addColumn() {
+            const columnName = prompt('Enter column name:');
+            if (columnName) {
+                const newColumn = { id: Date.now(), name: columnName, tasks: [] };
+                columns.push(newColumn);
+                saveColumns();
+                renderBoard();
+            }
+        }
+
+        function deleteColumn(columnId) {
+            const index = columns.findIndex(col => col.id == columnId);
+            if (index > -1) {
+                columns.splice(index, 1);
+                saveColumns();
+                renderBoard();
+            }
+        }
+
+        function moveColumnLeft(columnId) {
+            const index = columns.findIndex(col => col.id == columnId);
+            if (index > 0) {
+                [columns[index - 1], columns[index]] = [columns[index], columns[index - 1]];
+                saveColumns();
+                renderBoard();
+            }
+        }
+
+        function moveColumnRight(columnId) {
+            const index = columns.findIndex(col => col.id == columnId);
+            if (index < columns.length - 1) {
+                [columns[index], columns[index + 1]] = [columns[index + 1], columns[index]];
+                saveColumns();
+                renderBoard();
+            }
+        }
+
+        document.getElementById('addColumnBtn').onclick = addColumn;
+
+        // Drag and Drop for Tasks
+        function onDragStart(event) {
+            event.dataTransfer.setData('text/plain', JSON.stringify({
+                taskId: event.target.dataset.taskId,
+                fromColumnId: event.target.dataset.columnId,
+            }));
+        }
+
+        function onDragOver(event) {
+            event.preventDefault();
+        }
+
+        function onDragEnter(event) {
+            event.currentTarget.classList.add('drag-over');
+        }
+
+        function onDragLeave(event) {
+            event.currentTarget.classList.remove('drag-over');
+        }
+
+        function onDrop(event) {
+            event.preventDefault();
+            const data = JSON.parse(event.dataTransfer.getData('text/plain'));
+            const toColumnId = event.currentTarget.dataset.columnId;
+            const fromColumn = columns.find(col => col.id == data.fromColumnId);
+            const taskIndex = fromColumn.tasks.findIndex(task => task.id == data.taskId);
+            const [task] = fromColumn.tasks.splice(taskIndex, 1);
+            const toColumn = columns.find(col => col.id == toColumnId);
+            toColumn.tasks.push(task);
+            event.currentTarget.classList.remove('drag-over');
+            saveColumns();
+            renderBoard();
+        }
+
+        // Initialize the board
+        loadColumns();
+        renderBoard();
+    </script>
+</body>
+</html>
