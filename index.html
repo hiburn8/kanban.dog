@@ -28,6 +28,54 @@
             text-align: center;
             color: var(--highlight-color);
         }
+        #boardContainer {
+            display: flex;
+        }
+        #boardList {
+            width: 200px;
+            margin-right: 20px;
+            background-color: var(--column-background);
+            padding: 10px;
+            border-radius: 3px;
+            overflow-y: auto;
+            max-height: 80vh;
+        }
+        #boardList h2 {
+            color: var(--highlight-color);
+            margin-top: 0;
+        }
+        .board-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            cursor: pointer;
+            padding: 5px;
+        }
+        .board-item:hover {
+            background-color: #49483E;
+            border-radius: 3px;
+        }
+        .board-item span {
+            flex-grow: 1;
+            word-break: break-word;
+            cursor: pointer;
+        }
+        .board-item .delete-btn {
+            margin-left: 5px;
+        }
+        #addBoardBtn {
+            background-color: var(--button-background);
+            color: var(--foreground-color);
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 3px;
+            width: 100%;
+        }
+        #addBoardBtn:hover {
+            background-color: var(--button-hover-background);
+        }
         #addColumnBtn {
             display: block;
             margin: 0 auto 20px auto;
@@ -42,6 +90,7 @@
             background-color: var(--button-hover-background);
         }
         .board {
+            flex-grow: 1;
             display: flex;
             align-items: flex-start;
             overflow-x: auto;
@@ -148,47 +197,202 @@
             outline: none;
             border-bottom: 1px solid var(--highlight-color);
         }
+        .selected-board {
+            background-color: #49483E;
+            border-radius: 3px;
+        }
     </style>
 </head>
 <body>
     <h1>🐶</h1>
-    <button id="addColumnBtn">Add Column</button>
-    <div id="board" class="board">
-        <!-- Columns will be added here dynamically -->
+    <div id="boardContainer">
+        <div id="boardList">
+            <h2>Boards</h2>
+            <!-- Board items will be added here dynamically -->
+            <button id="addBoardBtn">Add Board</button>
+        </div>
+        <div>
+            <button id="addColumnBtn">Add Column</button>
+            <div id="board" class="board">
+                <!-- Columns will be added here dynamically -->
+            </div>
+        </div>
     </div>
 
     <script>
-        let columns = [];
+        let boards = [];
+        let currentBoardId = null;
 
-        // Load columns from local storage or initialize default columns
-        function loadColumns() {
-            const savedColumns = localStorage.getItem('columns');
-            if (savedColumns) {
-                columns = JSON.parse(savedColumns);
+        // Load boards from local storage or initialize default board
+        function loadBoards() {
+            const savedBoards = localStorage.getItem('boards');
+            if (savedBoards) {
+                boards = JSON.parse(savedBoards);
+                if (boards.length > 0) {
+                    if (!currentBoardId) {
+                        currentBoardId = boards[0].id;
+                    }
+                } else {
+                    createDefaultBoard();
+                }
             } else {
-                columns = [
-                    { id: 1, name: 'To Do', tasks:
-                        [{"id":1729251148441,"name":"Walkies"}]
-                    },
-                    { id: 2, name: 'In Progress', tasks: [] },
-                    { id: 3, name: 'Done 🎉', tasks:
-                        [{"id":1729251148442,"name":"Make a Kanban"}]
-                    },
-                    { id: 4, name: 'Blocked', tasks:
-                        [{"id":1729251148443,"name":"Become an Astronaut"}]
-                    },
-                ];
+                createDefaultBoard();
             }
         }
 
-        // Save columns to local storage
-        function saveColumns() {
-            localStorage.setItem('columns', JSON.stringify(columns));
+        function createDefaultBoard() {
+            const defaultBoard = {
+                id: Date.now(),
+                name: 'Dog Tasks',
+                columns: [
+                    { id: 1, name: 'To Do', tasks:
+                      [
+                      {
+                          "id": 1729265272977,
+                          "name": "Bark"
+                      },
+                      {
+                          "id": 1729265289585,
+                          "name": "Chase tail"
+                      }
+                      ]
+                    },
+                    { id: 2, name: 'In Progress', tasks: [] },
+                    { id: 3, name: 'Done', tasks:
+                      [
+                      {
+                          "id": 1729265164273,
+                          "name": "Make a Kanban"
+                      }
+                      ]
+                    },
+                ],
+            };
+            boards.push(defaultBoard);
+            currentBoardId = defaultBoard.id;
+            saveBoards();
+        }
+
+        // Save boards to local storage
+        function saveBoards() {
+            localStorage.setItem('boards', JSON.stringify(boards));
+        }
+
+        function renderBoardList() {
+            const boardList = document.getElementById('boardList');
+            const existingItems = boardList.querySelectorAll('.board-item');
+            existingItems.forEach(item => item.remove());
+
+            boards.forEach(board => {
+                const boardItem = document.createElement('div');
+                boardItem.className = 'board-item';
+                if (board.id === currentBoardId) {
+                    boardItem.classList.add('selected-board');
+                }
+
+                const boardName = document.createElement('span');
+                boardName.textContent = board.name;
+                boardName.className = 'editable';
+                boardName.contentEditable = false; // Not editable by default
+
+                boardName.onblur = () => {
+                    updateBoardName(board.id, boardName.textContent.trim());
+                    boardName.contentEditable = false;
+                };
+
+                boardName.onkeydown = (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        boardName.blur();
+                    }
+                };
+
+                const deleteBoardBtn = document.createElement('button');
+                deleteBoardBtn.textContent = 'X';
+                deleteBoardBtn.className = 'delete-btn';
+                deleteBoardBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    deleteBoard(board.id);
+                };
+
+                boardItem.appendChild(boardName);
+                boardItem.appendChild(deleteBoardBtn);
+
+                boardItem.onclick = () => {
+                    if (board.id !== currentBoardId) {
+                        selectBoard(board.id);
+                    } else {
+                        // Board is already selected, make the name editable
+                        boardName.contentEditable = true;
+                        boardName.focus();
+                    }
+                };
+
+                boardList.insertBefore(boardItem, document.getElementById('addBoardBtn'));
+            });
+        }
+
+        function selectBoard(boardId) {
+            currentBoardId = boardId;
+            renderBoardList();
+            renderBoard();
+        }
+
+        function updateBoardName(boardId, newName) {
+            if (newName === '') {
+                alert('Board name cannot be empty.');
+                renderBoardList();
+                return;
+            }
+            const board = boards.find(b => b.id === boardId);
+            if (board) {
+                board.name = newName;
+                saveBoards();
+                renderBoardList();
+            }
+        }
+
+        function addBoard() {
+            const boardName = prompt('Enter board name:');
+            if (boardName) {
+                const newBoard = {
+                    id: Date.now(),
+                    name: boardName,
+                    columns: [],
+                };
+                boards.push(newBoard);
+                currentBoardId = newBoard.id;
+                saveBoards();
+                renderBoardList();
+                renderBoard();
+            }
+        }
+
+        function deleteBoard(boardId) {
+            if (boards.length === 1) {
+                alert('You must have at least one board.');
+                return;
+            }
+            const index = boards.findIndex(b => b.id === boardId);
+            if (index > -1) {
+                boards.splice(index, 1);
+                if (currentBoardId === boardId) {
+                    currentBoardId = boards[0].id;
+                }
+                saveBoards();
+                renderBoardList();
+                renderBoard();
+            }
         }
 
         function renderBoard() {
-            const board = document.getElementById('board');
-            board.innerHTML = '';
+            const board = boards.find(b => b.id === currentBoardId);
+            if (!board) return;
+
+            const boardDiv = document.getElementById('board');
+            boardDiv.innerHTML = '';
+            const columns = board.columns;
+
             columns.forEach((column, columnIndex) => {
                 const columnDiv = document.createElement('div');
                 columnDiv.className = 'column';
@@ -303,24 +507,8 @@
                     const taskButtonsContainer = document.createElement('div');
                     taskButtonsContainer.className = 'task-buttons';
 
-                    if (taskIndex > 0) {
-                        taskButtonsContainer.appendChild(upArrowBtn);
-                    } else {
-                        upArrowBtn.disabled = true;
-                        upArrowBtn.style.visibility = 'hidden';
-                        upArrowBtn.style.cursor = 'default';
-                        taskButtonsContainer.appendChild(upArrowBtn);
-                    }
-
-                    if (taskIndex < column.tasks.length - 1) {
-                        taskButtonsContainer.appendChild(downArrowBtn);
-                    } else {
-                        downArrowBtn.disabled = true;
-                        downArrowBtn.style.visibility = 'hidden';
-                        downArrowBtn.style.cursor = 'default';
-                        taskButtonsContainer.appendChild(downArrowBtn);
-                    }
-
+                    taskButtonsContainer.appendChild(upArrowBtn);
+                    taskButtonsContainer.appendChild(downArrowBtn);
                     taskButtonsContainer.appendChild(deleteTaskBtn);
 
                     taskDiv.appendChild(taskContent);
@@ -333,7 +521,7 @@
                 columnDiv.appendChild(addTaskBtn);
                 columnDiv.appendChild(taskList);
 
-                board.appendChild(columnDiv);
+                boardDiv.appendChild(columnDiv);
             });
         }
 
@@ -343,11 +531,12 @@
                 renderBoard();
                 return;
             }
-            const column = columns.find(col => col.id == columnId);
+            const board = boards.find(b => b.id === currentBoardId);
+            const column = board.columns.find(col => col.id == columnId);
             const task = column.tasks.find(task => task.id == taskId);
             if (task) {
                 task.name = newName;
-                saveColumns();
+                saveBoards();
             }
         }
 
@@ -357,50 +546,55 @@
                 renderBoard();
                 return;
             }
-            const column = columns.find(col => col.id == columnId);
+            const board = boards.find(b => b.id === currentBoardId);
+            const column = board.columns.find(col => col.id == columnId);
             if (column) {
                 column.name = newName;
-                saveColumns();
+                saveBoards();
             }
         }
 
         function addTask(columnId) {
             const taskName = prompt('Enter task name:');
             if (taskName) {
-                const column = columns.find(col => col.id == columnId);
+                const board = boards.find(b => b.id === currentBoardId);
+                const column = board.columns.find(col => col.id == columnId);
                 const newTask = { id: Date.now(), name: taskName };
                 column.tasks.push(newTask);
-                saveColumns();
+                saveBoards();
                 renderBoard();
             }
         }
 
         function deleteTask(columnId, taskId) {
-            const column = columns.find(col => col.id == columnId);
+            const board = boards.find(b => b.id === currentBoardId);
+            const column = board.columns.find(col => col.id == columnId);
             const index = column.tasks.findIndex(task => task.id == taskId);
             if (index > -1) {
                 column.tasks.splice(index, 1);
-                saveColumns();
+                saveBoards();
                 renderBoard();
             }
         }
 
         function moveTaskUp(columnId, taskId) {
-            const column = columns.find(col => col.id == columnId);
+            const board = boards.find(b => b.id === currentBoardId);
+            const column = board.columns.find(col => col.id == columnId);
             const index = column.tasks.findIndex(task => task.id == taskId);
             if (index > 0) {
                 [column.tasks[index - 1], column.tasks[index]] = [column.tasks[index], column.tasks[index - 1]];
-                saveColumns();
+                saveBoards();
                 renderBoard();
             }
         }
 
         function moveTaskDown(columnId, taskId) {
-            const column = columns.find(col => col.id == columnId);
+            const board = boards.find(b => b.id === currentBoardId);
+            const column = board.columns.find(col => col.id == columnId);
             const index = column.tasks.findIndex(task => task.id == taskId);
             if (index < column.tasks.length - 1) {
                 [column.tasks[index], column.tasks[index + 1]] = [column.tasks[index + 1], column.tasks[index]];
-                saveColumns();
+                saveBoards();
                 renderBoard();
             }
         }
@@ -408,41 +602,46 @@
         function addColumn() {
             const columnName = prompt('Enter column name:');
             if (columnName) {
+                const board = boards.find(b => b.id === currentBoardId);
                 const newColumn = { id: Date.now(), name: columnName, tasks: [] };
-                columns.push(newColumn);
-                saveColumns();
+                board.columns.push(newColumn);
+                saveBoards();
                 renderBoard();
             }
         }
 
         function deleteColumn(columnId) {
-            const index = columns.findIndex(col => col.id == columnId);
+            const board = boards.find(b => b.id === currentBoardId);
+            const index = board.columns.findIndex(col => col.id == columnId);
             if (index > -1) {
-                columns.splice(index, 1);
-                saveColumns();
+                board.columns.splice(index, 1);
+                saveBoards();
                 renderBoard();
             }
         }
 
         function moveColumnLeft(columnId) {
-            const index = columns.findIndex(col => col.id == columnId);
+            const board = boards.find(b => b.id === currentBoardId);
+            const index = board.columns.findIndex(col => col.id == columnId);
             if (index > 0) {
-                [columns[index - 1], columns[index]] = [columns[index], columns[index - 1]];
-                saveColumns();
+                [board.columns[index - 1], board.columns[index]] = [board.columns[index], board.columns[index - 1]];
+                saveBoards();
                 renderBoard();
             }
         }
 
         function moveColumnRight(columnId) {
-            const index = columns.findIndex(col => col.id == columnId);
-            if (index < columns.length - 1) {
-                [columns[index], columns[index + 1]] = [columns[index + 1], columns[index]];
-                saveColumns();
+            const board = boards.find(b => b.id === currentBoardId);
+            const index = board.columns.findIndex(col => col.id == columnId);
+            if (index < board.columns.length - 1) {
+                [board.columns[index], board.columns[index + 1]] = [board.columns[index + 1], board.columns[index]];
+                saveBoards();
                 renderBoard();
             }
         }
 
         document.getElementById('addColumnBtn').onclick = addColumn;
+        document.getElementById('addBoardBtn').onclick = addBoard;
 
         // Drag and Drop for Tasks
         function onDragStart(event) {
@@ -468,18 +667,20 @@
             event.preventDefault();
             const data = JSON.parse(event.dataTransfer.getData('text/plain'));
             const toColumnId = event.currentTarget.dataset.columnId;
-            const fromColumn = columns.find(col => col.id == data.fromColumnId);
+            const board = boards.find(b => b.id === currentBoardId);
+            const fromColumn = board.columns.find(col => col.id == data.fromColumnId);
             const taskIndex = fromColumn.tasks.findIndex(task => task.id == data.taskId);
             const [task] = fromColumn.tasks.splice(taskIndex, 1);
-            const toColumn = columns.find(col => col.id == toColumnId);
+            const toColumn = board.columns.find(col => col.id == toColumnId);
             toColumn.tasks.push(task);
             event.currentTarget.classList.remove('drag-over');
-            saveColumns();
+            saveBoards();
             renderBoard();
         }
 
-        // Initialize the board
-        loadColumns();
+        // Initialize the boards and render
+        loadBoards();
+        renderBoardList();
         renderBoard();
     </script>
 </body>
