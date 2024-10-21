@@ -30,6 +30,8 @@
         }
         #boardContainer {
             display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
         }
         #boardList {
             width: 200px;
@@ -39,6 +41,7 @@
             border-radius: 3px;
             overflow-y: auto;
             max-height: 80vh;
+            flex-shrink: 0;
         }
         #boardList h2 {
             color: var(--highlight-color);
@@ -201,6 +204,59 @@
             background-color: #49483E;
             border-radius: 3px;
         }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            #boardContainer {
+                flex-direction: column;
+            }
+            #boardList {
+                width: 100%;
+                margin-right: 0;
+                margin-bottom: 20px;
+            }
+            .board {
+                overflow-x: unset;
+                overflow-y: unset;
+                flex-wrap: wrap;
+            }
+            .column {
+                width: 100%;
+                margin: 10px 0;
+            }
+            .task {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .task-buttons {
+                margin-top: 5px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            button {
+                padding: 5px;
+            }
+            .column {
+                padding: 5px;
+            }
+            .column-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .column-header div {
+                margin-top: 5px;
+            }
+            .task {
+                padding: 5px;
+            }
+            .task-buttons {
+                flex-wrap: wrap;
+            }
+            .task-buttons button {
+                margin-top: 5px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -220,7 +276,7 @@
     </div>
 
     <script>
-        let boards = [];
+   let boards = [];
         let currentBoardId = null;
 
         // Load boards from local storage or initialize default board
