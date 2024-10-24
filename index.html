@@ -81,7 +81,7 @@
         }
         #addColumnBtn {
             display: block;
-            margin: 5px auto 5px auto;
+            margin: 5px auto 20px auto;
             padding: 10px 20px;
             background-color: var(--button-background);
             color: var(--foreground-color);
@@ -272,10 +272,10 @@
         <button style="background-color: var(--delete-color)" onclick="clearLocalStorage()" aria-label="Clear Local Storage">🗑️ Clear Local Storage</button>
         </div>
         <div>
+            <button id="addColumnBtn">Add Column</button>
             <div id="board" class="board">
                 <!-- Columns will be added here dynamically -->
             </div>
-            <button id="addColumnBtn">Add Column</button>
         </div>
     </div>
 
