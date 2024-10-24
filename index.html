@@ -81,7 +81,7 @@
         }
         #addColumnBtn {
             display: block;
-            margin: 0 auto 20px auto;
+            margin: 5px auto 5px auto;
             padding: 10px 20px;
             background-color: var(--button-background);
             color: var(--foreground-color);
@@ -146,6 +146,7 @@
             color: var(--foreground-color);
             padding: 5px 10px;
             margin-top: 5px;
+            margin-bottom: 5px;
             cursor: pointer;
             border-radius: 3px;
         }
@@ -266,12 +267,15 @@
             <h2>Boards</h2>
             <!-- Board items will be added here dynamically -->
             <button id="addBoardBtn">Add Board</button>
+        <p>
+        <h2>Settings</h2>
+        <button style="background-color: var(--delete-color)" onclick="clearLocalStorage()" aria-label="Clear Local Storage">🗑️ Clear Local Storage</button>
         </div>
         <div>
-            <button id="addColumnBtn">Add Column</button>
             <div id="board" class="board">
                 <!-- Columns will be added here dynamically -->
             </div>
+            <button id="addColumnBtn">Add Column</button>
         </div>
     </div>
 
@@ -738,6 +742,19 @@
         loadBoards();
         renderBoardList();
         renderBoard();
+    </script>
+
+    <script>
+    function clearLocalStorage() {
+        if (confirm('Are you sure you want to clear all local storage data?')) {
+            localStorage.clear();
+            alert('All local storage items have been cleared.');
+            location.reload();
+        }
+        else{
+            alert('Phew. That was close.');
+            }
+        }
     </script>
 </body>
 </html>
