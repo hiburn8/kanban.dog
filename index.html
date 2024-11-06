@@ -41,7 +41,7 @@
             padding: 10px;
             border-radius: 3px;
             overflow-y: auto;
-            max-height: 80vh;
+            max-height: fit-content;
             flex-shrink: 0;
         }
         #boardList h2 {
@@ -103,7 +103,7 @@
             background-color: var(--column-background);
             border-radius: 3px;
             width: 250px;
-            margin: 0 10px;
+            margin: 10px 10px;
             padding: 10px;
             flex-shrink: 0;
             position: relative;
@@ -259,13 +259,22 @@
                 margin-top: 5px;
             }
         }
+        .toggle-button {
+          background: none;
+          border: none;
+          cursor: pointer;
+          transition: transform 0.3s ease;
+        }
+
     </style>
 </head>
 <body>
     <h1>🐶</h1>
     <div id="boardContainer">
         <div id="boardList">
-            <h2>Boards</h2>
+            <h2>Boards
+                <button class="toggle-button" id="toggleButton">➡</button>
+            </h2>
             <!-- Board items will be added here dynamically -->
             <button id="addBoardBtn">Add Board</button>
         <p>
@@ -757,5 +766,22 @@
             }
         }
     </script>
+    
+    <script>
+    const button = document.getElementById('toggleButton');
+    const board = document.getElementById('board');
+    let isRow = true;
+    let isRotated = false;
+
+    button.addEventListener('click', () => {
+      // Toggle rotation
+      isRotated = !isRotated;
+      button.style.transform = isRotated ? 'rotate(90deg)' : 'rotate(0deg)';
+
+      // Toggle flexDirection
+      isRow = !isRow;
+      board.style.flexDirection = isRow ? 'row' : 'column';
+    });
+  </script>
 </body>
 </html>
