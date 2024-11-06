@@ -4,6 +4,14 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐶</text></svg>">
     <title>🐶</title>
     <style>
+        /* Basic styling for the button */
+    .toggle-button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+
         /* Monokai Color Scheme Variables */
         :root {
             --background-color: #272822;
@@ -258,30 +266,28 @@
             .task-buttons button {
                 margin-top: 5px;
             }
+            
         }
-        .toggle-button {
-          background: none;
-          border: none;
-          cursor: pointer;
-          transition: transform 0.3s ease;
-        }
-
     </style>
 </head>
 <body>
     <h1>🐶</h1>
     <div id="boardContainer">
         <div id="boardList">
-            <h2>Boards
-                <button class="toggle-button" id="toggleButton">➡</button>
-            </h2>
+            <h2>Boards</h2>
+
             <!-- Board items will be added here dynamically -->
             <button id="addBoardBtn">Add Board</button>
         <p>
         <h2>Settings</h2>
+        
         <button style="background-color: var(--delete-color)" onclick="clearLocalStorage()" aria-label="Delete my Data">🔥 Burn my data</button>
         </div>
         <div>
+            <button class="toggle-button" id="toggleButton">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><g xmlns="http://www.w3.org/2000/svg" transform="matrix(0 -1 1 0 0.5 23.5)"><path fill="var(--highlight-color)" d="M1.9166666666666667 19.166666666666668V12.458333333333334h8.625v6.708333333333334H1.9166666666666667Zm0 -8.625V3.8333333333333335h8.625v6.708333333333334H1.9166666666666667Zm1.4375 -1.4375h5.75v-3.8333333333333335H3.354166666666667v3.8333333333333335Zm14.231250000000001 10.0625 -4.456250000000001 -4.456250000000001 1.00625 -1.00625 2.73125 2.707291666666667V3.8333333333333335h1.4375v12.578125l2.73125 -2.707291666666667 1.00625 1.00625 -4.456250000000001 4.456250000000001Z" stroke-width="1"/></g></svg>
+                </button>
+        
             <button id="addColumnBtn">Add Column</button>
             <div id="board" class="board">
                 <!-- Columns will be added here dynamically -->
