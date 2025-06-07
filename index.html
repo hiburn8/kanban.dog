@@ -994,6 +994,18 @@
                 }
             });
         }
+
+         document.body.addEventListener('click', function (e) {
+            const target = e.target;
+            if (target.classList.contains('delete-btn')) {
+                const confirmed = confirm('Are you sure you want to delete this item?');
+                if (!confirmed) {
+                    e.stopImmediatePropagation(); // Stops other listeners (like the actual delete function)
+                    e.preventDefault(); // Prevent any default actions
+                }
+            }
+        }, true); // Use capture to catch it before it reaches the button’s own handler
+
     </script>
 </body>
 </html>
