@@ -787,10 +787,27 @@
             const toColumnId = event.currentTarget.dataset.columnId;
             const board = boards.find(b => b.id === currentBoardId);
             const fromColumn = board.columns.find(col => col.id == data.fromColumnId);
-            const taskIndex = fromColumn.tasks.findIndex(task => task.id == data.taskId);
-            const [task] = fromColumn.tasks.splice(taskIndex, 1);
             const toColumn = board.columns.find(col => col.id == toColumnId);
-            toColumn.tasks.push(task);
+
+            const taskIndex = fromColumn.tasks.findIndex(task => task.id == data.taskId);
+            const [movedTask] = fromColumn.tasks.splice(taskIndex, 1);
+
+            // Identify where in the column the drop occurred
+            const taskList = event.currentTarget;
+            const children = Array.from(taskList.children);
+            const dropY = event.clientY;
+
+            let insertIndex = children.length; // Default: end of list
+
+            for (let i = 0; i < children.length; i++) {
+                const box = children[i].getBoundingClientRect();
+                if (dropY < box.top + box.height / 2) {
+                    insertIndex = i;
+                    break;
+                }
+            }
+
+            toColumn.tasks.splice(insertIndex, 0, movedTask);
             event.currentTarget.classList.remove('drag-over');
             saveBoards();
             renderBoard();
