@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Emoji Button Date Picker</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+    }
+
+    #emojiButton {
+      font-size: 2rem;
+      padding: 10px 15px;
+      border: none;
+      background: none;
+      cursor: pointer;
+    }
+
+    #datePicker {
+      display: none;
+      margin-top: 10px;
+      padding: 5px;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <button id="emojiButton" title="Pick a date">😊</button>
+  <input type="date" id="datePicker">
+
+  <script>
+    const emojiButton = document.getElementById('emojiButton');
+    const datePicker = document.getElementById('datePicker');
+
+    emojiButton.addEventListener('click', () => {
+      // Toggle visibility of the date picker
+      if (datePicker.style.display === 'none' || datePicker.style.display === '') {
+        datePicker.style.display = 'inline-block';
+        datePicker.focus(); // Optional: auto-focus
+      } else {
+        datePicker.style.display = 'none';
+      }
+    });
+  </script>
+
+</body>
+</html>

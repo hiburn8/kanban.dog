@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Emoji Map Location Picker</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    #locationButton {
+      font-size: 2rem;
+      padding: 10px;
+      border: none;
+      background: none;
+      cursor: pointer;
+    }
+    #mapModal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      align-items: center;
+      justify-content: center;
+    }
+    #mapContainer {
+      width: 80vw;
+      height: 80vh;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+    }
+    #closeBtn {
+      position: absolute;
+      top: 8px; right: 8px;
+      z-index: 1000;
+      background: red;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+    #coordinates {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    .leaflet-container { height: 100%; width: 100%; }
+  </style>
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+</head>
+<body>
+
+  <button id="locationButton" title="Pick a location">📍</button>
+  <div id="coordinates">No location selected.</div>
+
+  <div id="mapModal">
+    <div id="mapContainer">
+      <button id="closeBtn">× Close</button>
+      <div id="map"></div>
+    </div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+  <script>
+    const modal = document.getElementById('mapModal');
+    const btn = document.getElementById('locationButton');
+    const closeBtn = document.getElementById('closeBtn');
+    const coordsDisplay = document.getElementById('coordinates');
+
+    let map, marker;
+    let initialCenter = [51.505, -0.09];
+    let initialZoom = 13;
+
+    btn.addEventListener('click', () => {
+      modal.style.display = 'flex';
+
+      if (!map) {
+        initMap();
+      } else {
+        setTimeout(() => {
+          map.invalidateSize();
+          if (marker) {
+            map.setView(marker.getLatLng(), 13);
+          } else {
+            map.setView(initialCenter, initialZoom);
+          }
+        }, 100);
+      }
+    });
+
+    closeBtn.addEventListener('click', () => {
+      modal.style.display = 'none';
+    });
+
+    function initMap() {
+      map = L.map('map').setView(initialCenter, initialZoom);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap'
+      }).addTo(map);
+
+      L.Control.geocoder({
+        defaultMarkGeocode: false
+      })
+      .on('markgeocode', function(e) {
+        const latlng = e.geocode.center;
+        dropPin(latlng);
+        map.setView(latlng, 16);
+      })
+      .addTo(map);
+
+      map.on('click', e => dropPin(e.latlng));
+    }
+
+    function dropPin(latlng) {
+      if (marker) map.removeLayer(marker);
+      marker = L.marker(latlng).addTo(map);
+      coordsDisplay.textContent = `Selected location: ${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)}`;
+    }
+  </script>
+
+</body>
+</html>

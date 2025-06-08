@@ -273,6 +273,10 @@
             }
             
         }
+
+        .hide-it {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -1028,44 +1032,55 @@
         
         
         function exportBoards() {
-    const dataStr = JSON.stringify(boards, null, 2);
-    const blob = new Blob([dataStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "kanban_boards.json";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-}
-
-function importBoards(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const importedData = JSON.parse(e.target.result);
-
-            if (!Array.isArray(importedData)) throw new Error("Invalid format");
-
-            if (confirm("This will overwrite your current boards. Proceed?")) {
-                boards = importedData;
-                currentBoardId = boards.length > 0 ? boards[0].id : null;
-                saveBoards();
-                renderBoardList();
-                renderBoard();
-                alert("Boards imported successfully!");
-            }
-        } catch (error) {
-            alert("Failed to import: " + error.message);
+            const dataStr = JSON.stringify(boards, null, 2);
+            const blob = new Blob([dataStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "kanban_boards.json";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         }
-    };
-    reader.readAsText(file);
-}
 
+        function importBoards(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+
+                    if (!Array.isArray(importedData)) throw new Error("Invalid format");
+
+                    if (confirm("This will overwrite your current boards. Proceed?")) {
+                        boards = importedData;
+                        currentBoardId = boards.length > 0 ? boards[0].id : null;
+                        saveBoards();
+                        renderBoardList();
+                        renderBoard();
+                        alert("Boards imported successfully!");
+                    }
+                } catch (error) {
+                    alert("Failed to import: " + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function toggleVisibilityByClass(className) {
+          const elements = document.getElementsByClassName(className);
+          for (let i = 0; i < elements.length; i++) {
+            elements[i].classList.toggle('hide-it');
+          }
+        }
+
+        function toggleGrayscale(element) {
+          const currentFilter = element.style.filter;
+          element.style.filter = currentFilter.includes('grayscale(100%)') ? 'none' : 'grayscale(100%)';
+        }
 
     </script>
 </body>
