@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -285,9 +286,13 @@
         <p>
         <h2>Settings</h2>
         
+        <button onclick="exportBoards()">📤 Save</button>
+<input type="file" id="importFileInput" style="display: none;" accept=".json" onchange="importBoards(event)">
+<button onclick="document.getElementById('importFileInput').click()">📥 Load</button>
+        
           <button onclick="shiftSpecificCssVariables(30);" aria-label="Decorate">🌈</button>
                 
-          <button style="background-color: var(--delete-color)" onclick="clearLocalStorage()" aria-label="Delete my Data">🔥 Burn my data</button>
+          <button style="background-color: var(--delete-color)" onclick="clearLocalStorage()" aria-label="Delete my Data">💣 Wipe</button>
         </div>
         <div>
             <button class="toggle-button" id="toggleButton">
@@ -624,9 +629,24 @@
 
                     const taskButtonsContainer = document.createElement('div');
                     taskButtonsContainer.className = 'task-buttons';
+                    
+                    const clockButton = document.createElement('button');
+                    clockButton.innerHTML = '⏰';
+                    clockButton.title = 'Show created time';
+                    clockButton.style.display = 'none';
+                    clockButton.style.background = 'transparent';
+                    clockButton.style.border = 'none';
+                    clockButton.style.color = 'var(--highlight-color)';
+                    clockButton.style.cursor = 'pointer';
+                    clockButton.style.fontSize = '16px';
+                    clockButton.onclick = () => {
+                        const createdTime = new Date(Number(task.id));
+                        alert(`Created at: ${createdTime.toLocaleString()}`);
+                    };
 
                     taskButtonsContainer.appendChild(upArrowBtn);
                     taskButtonsContainer.appendChild(downArrowBtn);
+                    taskButtonsContainer.appendChild(clockButton);
                     taskButtonsContainer.appendChild(deleteTaskBtn);
 
                     taskDiv.appendChild(taskContent);
@@ -874,7 +894,7 @@
 
     <script>
         function clearLocalStorage() {
-            if (confirm('Are you sure you want to burn EVERYTHING?')) {
+            if (confirm('Are you sure you want to wipe EVERYTHING?')) {
                 localStorage.clear();
                 alert('your data screeches in agony 🔥🔥🔥\nonly the default board survives.');
                 location.reload();
@@ -1005,6 +1025,47 @@
                 }
             }
         }, true); // Use capture to catch it before it reaches the button’s own handler
+        
+        
+        function exportBoards() {
+    const dataStr = JSON.stringify(boards, null, 2);
+    const blob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "kanban_boards.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function importBoards(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const importedData = JSON.parse(e.target.result);
+
+            if (!Array.isArray(importedData)) throw new Error("Invalid format");
+
+            if (confirm("This will overwrite your current boards. Proceed?")) {
+                boards = importedData;
+                currentBoardId = boards.length > 0 ? boards[0].id : null;
+                saveBoards();
+                renderBoardList();
+                renderBoard();
+                alert("Boards imported successfully!");
+            }
+        } catch (error) {
+            alert("Failed to import: " + error.message);
+        }
+    };
+    reader.readAsText(file);
+}
+
 
     </script>
 </body>
