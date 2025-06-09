@@ -294,7 +294,7 @@
 <input type="file" id="importFileInput" style="display: none;" accept=".json" onchange="importBoards(event)">
 <button onclick="document.getElementById('importFileInput').click()">📥 Load</button>
         
-          <button onclick="shiftSpecificCssVariables(30);" aria-label="Decorate">🌈</button>
+          <button onclick="incrementThemeShift();" aria-label="Decorate">🌈</button>
                 
           <button style="background-color: var(--delete-color)" onclick="clearLocalStorage()" aria-label="Delete my Data">💣 Wipe</button>
         </div>
@@ -927,97 +927,128 @@
     </script>
   
     <script> //colour / theme stuff
-        function shiftSpecificCssVariables(hueShift = 30) {
-            // List of CSS variables used for colors
-            const cssVariables = [
-                '--background-color',
-                '--foreground-color',
-                '--column-background',
-                '--task-background',
-                '--highlight-color',
-                '--button-background',
-                '--button-hover-background',
-                '--delete-color',
-                '--move-btn-color',
-                '--border-color',
-                '--editable-border'
-            ];
+    
+    function getSettings() {
+        const stored = localStorage.getItem('settings');
+        return stored ? JSON.parse(stored) : {};
+    }
 
-            // Helper function to convert hex to HSL
-            function hexToHsl(hex) {
-                const bigint = parseInt(hex.slice(1), 16);
-                const r = (bigint >> 16) & 255;
-                const g = (bigint >> 8) & 255;
-                const b = bigint & 255;
-                return rgbToHsl(r, g, b);
-            }
+    function saveSettings(settings) {
+        localStorage.setItem('settings', JSON.stringify(settings));
+    }
 
-            // Helper function to convert HSL back to hex
-            function hslToHex(h, s, l) {
-                const [r, g, b] = hslToRgb(h, s, l);
-                return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()}`;
-            }
-
-            // Helper function to convert RGB to HSL
-            function rgbToHsl(r, g, b) {
-                r /= 255;
-                g /= 255;
-                b /= 255;
-                const max = Math.max(r, g, b), min = Math.min(r, g, b);
-                let h, s, l = (max + min) / 2;
-
-                if (max === min) {
-                    h = s = 0; // achromatic
-                } else {
-                    const d = max - min;
-                    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-                    switch (max) {
-                        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-                        case g: h = (b - r) / d + 2; break;
-                        case b: h = (r - g) / d + 4; break;
-                    }
-                    h /= 6;
-                }
-
-                return [h * 360, s * 100, l * 100];
-            }
-
-            // Helper function to convert HSL to RGB
-            function hslToRgb(h, s, l) {
-                s /= 100;
-                l /= 100;
-                const c = (1 - Math.abs(2 * l - 1)) * s;
-                const x = c * (1 - Math.abs((h / 60) % 2 - 1));
-                const m = l - c / 2;
-                let r = 0, g = 0, b = 0;
-
-                if (0 <= h && h < 60) { r = c; g = x; b = 0; }
-                else if (60 <= h && h < 120) { r = x; g = c; b = 0; }
-                else if (120 <= h && h < 180) { r = 0; g = c; b = x; }
-                else if (180 <= h && h < 240) { r = 0; g = x; b = c; }
-                else if (240 <= h && h < 300) { r = x; g = 0; b = c; }
-                else if (300 <= h && h < 360) { r = c; g = 0; b = x; }
-
-                return [
-                    Math.round((r + m) * 255),
-                    Math.round((g + m) * 255),
-                    Math.round((b + m) * 255)
-                ];
-            }
-
-            // Shift colors of specified CSS variables
-            const rootElement = document.documentElement.style;
-            const computedStyles = getComputedStyle(document.documentElement);
-
-            cssVariables.forEach(variable => {
-                const colorValue = computedStyles.getPropertyValue(variable).trim();
-                if (colorValue.startsWith('#')) {  // Check if color is in hex format
-                    const [h, s, l] = hexToHsl(colorValue);
-                    const shiftedHexColor = hslToHex((h + hueShift) % 360, s, l);
-                    rootElement.setProperty(variable, shiftedHexColor);
-                }
-            });
+    function applySavedThemeShift() {
+        const settings = getSettings();
+        const count = settings.themeShiftCount || 0;
+        for (let i = 0; i < count; i++) {
+            shiftSpecificCssVariables(30);
         }
+    }
+
+    function incrementThemeShift() {
+        const settings = getSettings();
+        settings.themeShiftCount = (settings.themeShiftCount || 0) + 1;
+        saveSettings(settings);
+        shiftSpecificCssVariables(30);
+    }
+
+    function shiftSpecificCssVariables(hueShift = 30) {
+        const cssVariables = [
+            '--background-color',
+            '--foreground-color',
+            '--column-background',
+            '--task-background',
+            '--highlight-color',
+            '--button-background',
+            '--button-hover-background',
+            '--delete-color',
+            '--move-btn-color',
+            '--border-color',
+            '--editable-border'
+        ];
+
+        function hexToHsl(hex) {
+            const bigint = parseInt(hex.slice(1), 16);
+            const r = (bigint >> 16) & 255;
+            const g = (bigint >> 8) & 255;
+            const b = bigint & 255;
+            return rgbToHsl(r, g, b);
+        }
+
+        function hslToHex(h, s, l) {
+            const [r, g, b] = hslToRgb(h, s, l);
+            return `#${((1 << 24) + (r << 16) + (g << 8) + b)
+                .toString(16)
+                .slice(1)
+                .toUpperCase()}`;
+        }
+
+        function rgbToHsl(r, g, b) {
+            r /= 255;
+            g /= 255;
+            b /= 255;
+            const max = Math.max(r, g, b), min = Math.min(r, g, b);
+            let h, s, l = (max + min) / 2;
+
+            if (max === min) {
+                h = s = 0;
+            } else {
+                const d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                switch (max) {
+                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                    case g: h = (b - r) / d + 2; break;
+                    case b: h = (r - g) / d + 4; break;
+                }
+                h /= 6;
+            }
+
+            return [h * 360, s * 100, l * 100];
+        }
+
+        function hslToRgb(h, s, l) {
+            s /= 100;
+            l /= 100;
+            const c = (1 - Math.abs(2 * l - 1)) * s;
+            const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+            const m = l - c / 2;
+            let r = 0, g = 0, b = 0;
+
+            if (0 <= h && h < 60) { r = c; g = x; b = 0; }
+            else if (60 <= h && h < 120) { r = x; g = c; b = 0; }
+            else if (120 <= h && h < 180) { r = 0; g = c; b = x; }
+            else if (180 <= h && h < 240) { r = 0; g = x; b = c; }
+            else if (240 <= h && h < 300) { r = x; g = 0; b = c; }
+            else if (300 <= h && h < 360) { r = c; g = 0; b = x; }
+
+            return [
+                Math.round((r + m) * 255),
+                Math.round((g + m) * 255),
+                Math.round((b + m) * 255)
+            ];
+        }
+
+        const rootElement = document.documentElement.style;
+        const computedStyles = getComputedStyle(document.documentElement);
+
+        cssVariables.forEach(variable => {
+            const colorValue = computedStyles.getPropertyValue(variable).trim();
+            if (colorValue.startsWith('#')) {
+                let [h, s, l] = hexToHsl(colorValue);
+                const shiftedHexColor = hslToHex((h + hueShift) % 360, s, l);
+                rootElement.setProperty(variable, shiftedHexColor);
+            }
+        });
+    }
+
+    // Apply theme when page loads
+    window.addEventListener('DOMContentLoaded', () => {
+        applySavedThemeShift();
+    });
+    </script>
+
+    <script>
+    //helper stuff
 
          document.body.addEventListener('click', function (e) {
             const target = e.target;
@@ -1029,8 +1060,7 @@
                 }
             }
         }, true); // Use capture to catch it before it reaches the button’s own handler
-        
-        
+
         function exportBoards() {
             const dataStr = JSON.stringify(boards, null, 2);
             const blob = new Blob([dataStr], { type: "application/json" });
