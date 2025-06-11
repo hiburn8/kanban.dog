@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐶</text></svg>">
+    <title>woof</title>
+    <style>
+        /* Basic styling for the button */
+        .toggle-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        /* Monokai Color Scheme Variables */
+        :root {
+            --background-color: #272822;
+            --foreground-color: #F8F8F2;
+            --column-background: #3B3A32;
+            --task-background: #49483E;
+            --highlight-color: #A6E22E; /* Green */
+            --button-background: #66D9EF; /* Blue */
+            --button-hover-background: #57C7E3;
+            --delete-color: #F92672; /* Red */
+            --move-btn-color: #FD971F; /* Orange */
+            --border-color: #75715E;
+            --editable-border: #E6DB74; /* Yellow */
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: var(--background-color);
+            color: var(--foreground-color);
+        }
+        h1 {
+            text-align: center;
+            color: var(--highlight-color);
+        }
+        #boardContainer {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+        }
+        #boardList {
+            width: 200px;
+            margin-right: 20px;
+            background-color: var(--column-background);
+            padding: 10px;
+            border-radius: 3px;
+            overflow-y: auto;
+            max-height: fit-content;
+            flex-shrink: 0;
+        }
+        #boardList h2 {
+            color: var(--highlight-color);
+            margin-top: 0;
+        }
+        .board-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            cursor: pointer;
+            padding: 5px;
+        }
+        .board-item:hover {
+            background-color: #49483E;
+            border-radius: 3px;
+        }
+        .board-item.drag-over {
+            background-color: #49483E;
+            border-radius: 3px;
+        }
+        .board-item span {
+            flex-grow: 1;
+            word-break: break-word;
+            cursor: pointer;
+        }
+        .board-item .delete-btn {
+            margin-left: 5px;
+        }
+        #addBoardBtn {
+            background-color: var(--button-background);
+            color: var(--foreground-color);
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 3px;
+            width: 100%;
+        }
+        #addBoardBtn:hover {
+            background-color: var(--button-hover-background);
+        }
+        #addColumnBtn {
+            display: block;
+            margin: 5px auto 20px auto;
+            padding: 10px 20px;
+            background-color: var(--button-background);
+            color: var(--foreground-color);
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        #addColumnBtn:hover {
+            background-color: var(--button-hover-background);
+        }
+        .board {
+            flex-grow: 1;
+            display: flex;
+            align-items: flex-start;
+            overflow-x: auto;
+        }
+        .column {
+            background-color: var(--column-background);
+            border-radius: 3px;
+            width: 250px;
+            margin: 10px 10px;
+            padding: 10px;
+            flex-shrink: 0;
+            position: relative;
+        }
+        .column-header {
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--highlight-color);
+        }
+        .column-header span {
+            cursor: pointer;
+            word-break: break-word;
+        }
+        .task-list {
+            min-height: 50px;
+        }
+        .task {
+            background-color: var(--task-background);
+            border-radius: 3px;
+            padding: 10px;
+            margin-top: 10px;
+            cursor: move;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--foreground-color);
+        }
+        .task span {
+            flex-grow: 1;
+            cursor: pointer;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            overflow: hidden;
+        }
+        button {
+            background-color: var(--button-background);
+            border: none;
+            color: var(--foreground-color);
+            padding: 5px 10px;
+            margin-top: 5px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+        button:hover {
+            background-color: var(--button-hover-background);
+        }
+        .delete-btn {
+            background-color: transparent;
+            border: none;
+            color: var(--delete-color);
+            font-size: 16px;
+            cursor: pointer;
+            padding: 0 5px;
+        }
+        .delete-btn:hover {
+            color: #ff5f7f;
+        }
+        .move-btn {
+            background-color: transparent;
+            border: none;
+            color: var(--move-btn-color);
+            font-size: 16px;
+            cursor: pointer;
+            padding: 0 5px;
+        }
+        .move-btn:hover {
+            color: #e58a00;
+        }
+        .drag-over {
+            background-color: #3E3D32;
+        }
+        .task-buttons {
+            display: flex;
+            flex-shrink: 0;
+            align-items: center;
+        }
+        .arrow-btn {
+            background-color: transparent;
+            border: none;
+            color: var(--move-btn-color);
+            font-size: 16px;
+            cursor: pointer;
+            padding: 0 5px;
+        }
+        .arrow-btn:hover {
+            color: #e58a00;
+        }
+        .editable {
+            border-bottom: 1px solid var(--highlight-color);
+        }
+        .editable:focus {
+            outline: none;
+            border-bottom: 1px dashed var(--editable-border);
+        }
+        .selected-board {
+            background-color: #49483E;
+            border-radius: 3px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            #boardContainer {
+                flex-direction: column;
+            }
+            #boardList {
+                width: 100%;
+                margin-right: 0;
+                margin-bottom: 20px;
+            }
+            .board {
+                overflow-x: unset;
+                overflow-y: unset;
+                flex-wrap: wrap;
+            }
+            .column {
+                width: 100%;
+                margin: 10px 0;
+            }
+            .task {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .task-buttons {
+                margin-top: 5px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            button {
+                padding: 5px;
+            }
+            .column {
+                padding: 5px;
+            }
+            .column-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .column-header div {
+                margin-top: 5px;
+            }
+            .task {
+                padding: 5px;
+            }
+            .task-buttons {
+                flex-wrap: wrap;
+            }
+            .task-buttons button {
+                margin-top: 5px;
+            }
+        }
+        .hide-it {
+            display: none;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+</head>
+<body>
+    <h1>🐶</h1>
+    <div id="boardContainer">
+        <div id="boardList">
+            <h2>Boards</h2>
+
+            <button id="addBoardBtn">Add Board</button>
+            <p>
+            <h2>Settings</h2>
+            <button onclick="exportBoards()">📤 Save</button>
+            <input type="file" id="importFileInput" style="display: none;" accept=".json" onchange="importBoards(event)">
+            <button onclick="document.getElementById('importFileInput').click()">📥 Load</button>
+            <button onclick="encryptBoardsPrompt()">🔒 Encrypt</button>
+            <button onclick="decryptBoardsPrompt()">🔓 Decrypt</button>
+            <button onclick="incrementThemeShift();" aria-label="Decorate">🌈</button>
+            <button style="background-color: var(--delete-color)" onclick="clearLocalStorage()" aria-label="Delete my Data">💣 Wipe</button>
+        </div>
+        <div>
+            <button class="toggle-button" id="toggleButton">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><g xmlns="http://www.w3.org/2000/svg" transform="matrix(0 -1 1 0 0.5 23.5)"><path fill="var(--highlight-color)" d="M1.9166666666666667 19.166666666666668V12.458333333333334h8.625v6.708333333333334H1.9166666666666667Zm0 -8.625V3.8333333333333335h8.625v6.708333333333334H1.9166666666666667Zm1.4375 -1.4375h5.75v-3.8333333333333335H3.354166666666667v3.8333333333333335Zm14.231250000000001 10.0625 -4.456250000000001 -4.456250000000001 1.00625 -1.00625 2.73125 2.707291666666667V3.8333333333333335h1.4375v12.578125l2.73125 -2.707291666666667 1.00625 1.00625 -4.456250000000001 4.456250000000001Z" stroke-width="1"/></g></svg>
+            </button>
+            <button id="addColumnBtn">Add Column</button>
+            <div id="board" class="board">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        let boards = [];
+        let currentBoardId = null;
+        let encryptionKey = null; // Holds the encryption key
+
+        // Function to encrypt data
+        function encryptData(data, key) {
+            try {
+                return CryptoJS.AES.encrypt(JSON.stringify(data), key).toString();
+            } catch (e) {
+                console.error("Encryption failed:", e);
+                return null;
+            }
+        }
+
+        // Function to decrypt data
+        function decryptData(encryptedData, key) {
+            try {
+                const bytes = CryptoJS.AES.decrypt(encryptedData, key);
+                // Try to parse. If it's not valid UTF8, it means the key was wrong
+                const decryptedText = bytes.toString(CryptoJS.enc.Utf8);
+                if (!decryptedText) { // Check if decryption yielded empty string, which can happen with wrong key
+                    throw new Error("Decryption resulted in empty or invalid data.");
+                }
+                return JSON.parse(decryptedText);
+            } catch (e) {
+                console.error("Decryption failed:", e);
+                return null;
+            }
+        }
+
+        // Load boards from local storage or initialize default board
+        function loadBoards() {
+            let savedBoards = localStorage.getItem('boards');
+            if (savedBoards) {
+                try {
+                    // Try to parse as plain JSON first
+                    boards = JSON.parse(savedBoards);
+                    if (boards.length > 0) {
+                        if (!currentBoardId) {
+                            currentBoardId = boards[0].id;
+                        }
+                    } else {
+                        // If it's an empty array or not a valid board structure after parsing,
+                        // and it's not encrypted, initialize default.
+                        createDefaultBoardIfEmpty();
+                    }
+                } catch (e) {
+                    // If parsing failed, data is likely encrypted.
+                    // Do not prompt for key immediately. Boards will remain empty for now.
+                    boards = []; // Ensure boards is empty
+                    currentBoardId = null;
+                    console.log("Board data appears to be encrypted or corrupted. Please use the 'Decrypt' button if it's encrypted.");
+                }
+            } else {
+                createDefaultBoard();
+            }
+        }
+
+        function createDefaultBoardIfEmpty() {
+            if (!boards || boards.length === 0) {
+                createDefaultBoard();
+            }
+        }
+
+        function createDefaultBoard() {
+            const defaultBoard = {
+                id: Date.now(),
+                name: 'Dog Tasks',
+                columns: [
+                    { id: 1, name: 'To Do', tasks:
+                      [
+                        {
+                            id: 1729265272977,
+                            name: 'Bark'
+                        },
+                        {
+                            id: 1729265289585,
+                            name: 'Chase tail'
+                        }
+                      ]
+                    },
+                    { id: 2, name: 'In Progress', tasks: [] },
+                    { id: 3, name: 'Done', tasks:
+                      [
+                        {
+                            id: 1729265164273,
+                            name: 'Make a Kanban'
+                        }
+                      ]
+                    },
+                ],
+            };
+            boards = [defaultBoard]; // Overwrite boards with default
+            currentBoardId = defaultBoard.id;
+            saveBoards();
+        }
+
+        // Save boards to local storage
+        function saveBoards() {
+            if (encryptionKey) {
+                const encryptedData = encryptData(boards, encryptionKey);
+                if (encryptedData) {
+                    localStorage.setItem('boards', encryptedData);
+                    alert('Boards encrypted and saved!');
+                } else {
+                    alert('Failed to encrypt boards. Not saving.');
+                }
+            } else {
+                localStorage.setItem('boards', JSON.stringify(boards));
+            }
+        }
+
+        function encryptBoardsPrompt() {
+            const key = prompt('Enter an encryption key. This will encrypt your boards. REMEMBER THIS KEY!');
+            if (key) {
+                encryptionKey = key;
+                saveBoards();
+                renderBoardList();
+                renderBoard();
+            } else {
+                alert('Encryption cancelled. No key provided.');
+            }
+        }
+
+        function decryptBoardsPrompt() {
+            const key = prompt('Enter the decryption key.');
+            if (key) {
+                const savedBoards = localStorage.getItem('boards');
+                if (savedBoards) {
+                    const decrypted = decryptData(savedBoards, key);
+                    if (decrypted) {
+                        boards = decrypted;
+                        if (boards.length > 0) {
+                            currentBoardId = boards[0].id; // Set current board to the first decrypted board
+                        } else {
+                            currentBoardId = null; // No boards after decryption
+                        }
+                        encryptionKey = key; // Keep the key if decryption was successful
+                        alert('Boards decrypted and loaded successfully!');
+                        renderBoardList();
+                        renderBoard();
+                    } else {
+                        alert('Failed to decrypt boards with the provided key. Data might be corrupted or the key is incorrect.');
+                        // Do NOT wipe or set default board here. Keep the current state.
+                    }
+                } else {
+                    alert('No boards found in local storage to decrypt.');
+                }
+            } else {
+                alert('Decryption cancelled. No key provided.');
+            }
+        }
+
+        function renderBoardList() {
+            const boardList = document.getElementById('boardList');
+            // Remove all board-item elements except the "Add Board" button and settings
+            const existingItems = boardList.querySelectorAll('.board-item');
+            existingItems.forEach(item => item.remove());
+
+            boards.forEach((board, index) => {
+                const boardItem = document.createElement('div');
+                boardItem.className = 'board-item';
+                if (board.id === currentBoardId) {
+                    boardItem.classList.add('selected-board');
+                }
+
+                boardItem.dataset.boardId = board.id;
+                boardItem.draggable = true;
+                boardItem.ondragstart = boardDragStart;
+                boardItem.ondragover = boardDragOver;
+                boardItem.ondragenter = boardDragEnter;
+                boardItem.ondragleave = boardDragLeave;
+                boardItem.ondrop = boardDrop;
+
+                const boardName = document.createElement('span');
+                boardName.textContent = board.name;
+                boardName.className = 'editable';
+                boardName.contentEditable = false; // Not editable by default
+
+                boardName.onblur = () => {
+                    updateBoardName(board.id, boardName.textContent.trim());
+                    boardName.contentEditable = false;
+                };
+
+                boardName.onkeydown = (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        boardName.blur();
+                    }
+                };
+
+                const buttonsContainer = document.createElement('div');
+                buttonsContainer.style.display = 'flex';
+                buttonsContainer.style.alignItems = 'center';
+
+                const moveUpBtn = document.createElement('button');
+                moveUpBtn.textContent = '↑';
+                moveUpBtn.className = 'arrow-btn';
+                moveUpBtn.onclick = (e) => { e.stopPropagation(); moveBoardUp(board.id); };
+                if (index === 0) {
+                    moveUpBtn.disabled = true;
+                    moveUpBtn.style.visibility = 'hidden';
+                    moveUpBtn.style.cursor = 'default';
+                }
+
+                const moveDownBtn = document.createElement('button');
+                moveDownBtn.textContent = '↓';
+                moveDownBtn.className = 'arrow-btn';
+                moveDownBtn.onclick = (e) => { e.stopPropagation(); moveBoardDown(board.id); };
+                if (index === boards.length - 1) {
+                    moveDownBtn.disabled = true;
+                    moveDownBtn.style.visibility = 'hidden';
+                    moveDownBtn.style.cursor = 'default';
+                }
+
+                const deleteBoardBtn = document.createElement('button');
+                deleteBoardBtn.textContent = 'X';
+                deleteBoardBtn.className = 'delete-btn';
+                deleteBoardBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    deleteBoard(board.id);
+                };
+
+                buttonsContainer.appendChild(moveUpBtn);
+                buttonsContainer.appendChild(moveDownBtn);
+                buttonsContainer.appendChild(deleteBoardBtn);
+
+                boardItem.appendChild(boardName);
+                boardItem.appendChild(buttonsContainer);
+
+                boardItem.onclick = () => {
+                    if (board.id !== currentBoardId) {
+                        selectBoard(board.id);
+                    } else {
+                        // Board is already selected, make the name editable
+                        boardName.contentEditable = true;
+                        boardName.focus();
+                    }
+                };
+
+                boardList.insertBefore(boardItem, document.getElementById('addBoardBtn'));
+            });
+        }
+
+        function selectBoard(boardId) {
+            currentBoardId = boardId;
+            renderBoardList();
+            renderBoard();
+        }
+
+        function updateBoardName(boardId, newName) {
+            if (newName === '') {
+                alert('Board name cannot be empty.');
+                renderBoardList();
+                return;
+            }
+            const board = boards.find(b => b.id === boardId);
+            if (board) {
+                board.name = newName;
+                saveBoards();
+                renderBoardList();
+            }
+        }
+
+        function addBoard() {
+            const boardName = prompt('Enter board name:');
+            if (boardName) {
+                const newBoard = {
+                    id: Date.now(),
+                    name: boardName,
+                    columns: [],
+                };
+                boards.push(newBoard);
+                currentBoardId = newBoard.id;
+                saveBoards();
+                renderBoardList();
+                renderBoard();
+            }
+        }
+
+        function deleteBoard(boardId) {
+            if (boards.length === 1) {
+                alert('You must have at least one board.');
+                return;
+            }
+            const index = boards.findIndex(b => b.id === boardId);
+            if (index > -1) {
+                boards.splice(index, 1);
+                if (currentBoardId === boardId) {
+                    currentBoardId = boards[0].id;
+                }
+                saveBoards();
+                renderBoardList();
+                renderBoard();
+            }
+        }
+
+        function renderBoard() {
+            const board = boards.find(b => b.id === currentBoardId);
+            const boardDiv = document.getElementById('board');
+            boardDiv.innerHTML = ''; // Clear existing content
+
+            if (!board) {
+                // If no board is selected or available, show a message or keep empty
+                const messageDiv = document.createElement('div');
+                messageDiv.textContent = 'No board selected or available. Create a new one or decrypt existing data.';
+                messageDiv.style.textAlign = 'center';
+                messageDiv.style.marginTop = '50px';
+                messageDiv.style.color = 'var(--foreground-color)';
+                boardDiv.appendChild(messageDiv);
+                document.getElementById('addColumnBtn').style.display = 'none'; // Hide add column button
+                return;
+            }
+            document.getElementById('addColumnBtn').style.display = 'block'; // Show add column button
+
+            const columns = board.columns;
+
+            columns.forEach((column, columnIndex) => {
+                const columnDiv = document.createElement('div');
+                columnDiv.className = 'column';
+                columnDiv.dataset.columnId = column.id;
+
+                const header = document.createElement('div');
+                header.className = 'column-header';
+
+                const headerTitle = document.createElement('span');
+                headerTitle.textContent = column.name;
+                headerTitle.className = 'editable';
+                headerTitle.contentEditable = true;
+                headerTitle.onblur = () => updateColumnName(column.id, headerTitle.textContent.trim());
+                headerTitle.onkeydown = (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        headerTitle.blur();
+                    }
+                };
+
+                const headerButtons = document.createElement('div');
+
+                const moveLeftBtn = document.createElement('button');
+                moveLeftBtn.textContent = '←';
+                moveLeftBtn.className = 'move-btn';
+                moveLeftBtn.onclick = () => moveColumnLeft(column.id);
+                if (columnIndex === 0) {
+                    moveLeftBtn.disabled = true;
+                    moveLeftBtn.style.visibility = 'hidden';
+                    moveLeftBtn.style.cursor = 'default';
+                }
+
+                const moveRightBtn = document.createElement('button');
+                moveRightBtn.textContent = '→';
+                moveRightBtn.className = 'move-btn';
+                moveRightBtn.onclick = () => moveColumnRight(column.id);
+                if (columnIndex === columns.length - 1) {
+                    moveRightBtn.disabled = true;
+                    moveRightBtn.style.visibility = 'hidden';
+                    moveRightBtn.style.cursor = 'default';
+                }
+
+                const deleteColumnBtn = document.createElement('button');
+                deleteColumnBtn.textContent = 'X';
+                deleteColumnBtn.className = 'delete-btn';
+                deleteColumnBtn.onclick = () => deleteColumn(column.id);
+
+                headerButtons.appendChild(moveLeftBtn);
+                headerButtons.appendChild(moveRightBtn);
+                headerButtons.appendChild(deleteColumnBtn);
+
+                header.appendChild(headerTitle);
+                header.appendChild(headerButtons);
+
+                const addTaskBtn = document.createElement('button');
+                addTaskBtn.textContent = 'Add Task';
+                addTaskBtn.onclick = () => addTask(column.id);
+
+                const taskList = document.createElement('div');
+                taskList.className = 'task-list';
+                taskList.dataset.columnId = column.id;
+                taskList.ondrop = onDrop;
+                taskList.ondragover = onDragOver;
+                taskList.ondragenter = onDragEnter;
+                taskList.ondragleave = onDragLeave;
+
+                column.tasks.forEach((task, taskIndex) => {
+                    const taskDiv = document.createElement('div');
+                    taskDiv.className = 'task';
+                    taskDiv.draggable = true;
+                    taskDiv.dataset.taskId = task.id;
+                    taskDiv.dataset.columnId = column.id;
+                    taskDiv.ondragstart = onDragStart;
+
+                    const taskContent = document.createElement('span');
+                    taskContent.textContent = task.name;
+                    taskContent.className = 'editable';
+                    taskContent.contentEditable = true;
+                    taskContent.onblur = () => updateTaskName(column.id, task.id, taskContent.textContent.trim());
+                    taskContent.onkeydown = (e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            taskContent.blur();
+                        }
+                    };
+
+                    const deleteTaskBtn = document.createElement('button');
+                    deleteTaskBtn.textContent = 'X';
+                    deleteTaskBtn.className = 'delete-btn';
+                    deleteTaskBtn.onclick = () => deleteTask(column.id, task.id);
+
+                    const upArrowBtn = document.createElement('button');
+                    upArrowBtn.textContent = '↑';
+                    upArrowBtn.className = 'arrow-btn';
+                    upArrowBtn.onclick = () => moveTaskUp(column.id, task.id);
+                    if (taskIndex === 0) {
+                        upArrowBtn.disabled = true;
+                        upArrowBtn.style.visibility = 'hidden';
+                        upArrowBtn.style.cursor = 'default';
+                    }
+
+                    const downArrowBtn = document.createElement('button');
+                    downArrowBtn.textContent = '↓';
+                    downArrowBtn.className = 'arrow-btn';
+                    downArrowBtn.onclick = () => moveTaskDown(column.id, task.id);
+                    if (taskIndex === column.tasks.length - 1) {
+                        downArrowBtn.disabled = true;
+                        downArrowBtn.style.visibility = 'hidden';
+                        downArrowBtn.style.cursor = 'default';
+                    }
+
+                    const taskButtonsContainer = document.createElement('div');
+                    taskButtonsContainer.className = 'task-buttons';
+                    const clockButton = document.createElement('button');
+                    clockButton.innerHTML = '⏰';
+                    clockButton.title = 'Show created time';
+                    clockButton.style.display = 'none';
+                    clockButton.style.background = 'transparent';
+                    clockButton.style.border = 'none';
+                    clockButton.style.color = 'var(--highlight-color)';
+                    clockButton.style.cursor = 'pointer';
+                    clockButton.style.fontSize = '16px';
+                    clockButton.onclick = () => {
+                        const createdTime = new Date(Number(task.id));
+                        alert(`Created at: ${createdTime.toLocaleString()}`);
+                    };
+
+                    taskButtonsContainer.appendChild(upArrowBtn);
+                    taskButtonsContainer.appendChild(downArrowBtn);
+                    taskButtonsContainer.appendChild(clockButton);
+                    taskButtonsContainer.appendChild(deleteTaskBtn);
+
+                    taskDiv.appendChild(taskContent);
+                    taskDiv.appendChild(taskButtonsContainer);
+
+                    taskList.appendChild(taskDiv);
+                });
+
+                columnDiv.appendChild(header);
+                columnDiv.appendChild(addTaskBtn);
+                columnDiv.appendChild(taskList);
+
+                boardDiv.appendChild(columnDiv);
+            });
+        }
+
+        function updateTaskName(columnId, taskId, newName) {
+            if (newName === '') {
+                alert('Task name cannot be empty.');
+                renderBoard();
+                return;
+            }
+            const board = boards.find(b => b.id === currentBoardId);
+            const column = board.columns.find(col => col.id == columnId);
+            const task = column.tasks.find(task => task.id == taskId);
+            if (task) {
+                task.name = newName;
+                saveBoards();
+            }
+        }
+
+        function updateColumnName(columnId, newName) {
+            if (newName === '') {
+                alert('Column name cannot be empty.');
+                renderBoard();
+                return;
+            }
+            const board = boards.find(b => b.id === currentBoardId);
+            const column = board.columns.find(col => col.id == columnId);
+            if (column) {
+                column.name = newName;
+                saveBoards();
+            }
+        }
+
+        function addTask(columnId) {
+            const taskName = prompt('Enter task name:');
+            if (taskName) {
+                const board = boards.find(b => b.id === currentBoardId);
+                const column = board.columns.find(col => col.id == columnId);
+                const newTask = { id: Date.now(), name: taskName };
+                column.tasks.push(newTask);
+                saveBoards();
+                renderBoard();
+            }
+        }
+
+        function deleteTask(columnId, taskId) {
+            const board = boards.find(b => b.id === currentBoardId);
+            const column = board.columns.find(col => col.id == columnId);
+            const index = column.tasks.findIndex(task => task.id == taskId);
+            if (index > -1) {
+                column.tasks.splice(index, 1);
+                saveBoards();
+                renderBoard();
+            }
+        }
+
+        function moveTaskUp(columnId, taskId) {
+            const board = boards.find(b => b.id === currentBoardId);
+            const column = board.columns.find(col => col.id == columnId);
+            const index = column.tasks.findIndex(task => task.id == taskId);
+            if (index > 0) {
+                [column.tasks[index - 1], column.tasks[index]] = [column.tasks[index], column.tasks[index - 1]];
+                saveBoards();
+                renderBoard();
+            }
+        }
+
+        function moveTaskDown(columnId, taskId) {
+            const board = boards.find(b => b.id === currentBoardId);
+            const column = board.columns.find(col => col.id == columnId);
+            const index = column.tasks.findIndex(task => task.id == taskId);
+            if (index < column.tasks.length - 1) {
+                [column.tasks[index], column.tasks[index + 1]] = [column.tasks[index + 1], column.tasks[index]];
+                saveBoards();
+                renderBoard();
+            }
+        }
+
+        function addColumn() {
+            const columnName = prompt('Enter column name:');
+            if (columnName) {
+                const board = boards.find(b => b.id === currentBoardId);
+                const newColumn = { id: Date.now(), name: columnName, tasks: [] };
+                board.columns.push(newColumn);
+                saveBoards();
+                renderBoard();
+            }
+        }
+
+        function deleteColumn(columnId) {
+            const board = boards.find(b => b.id === currentBoardId);
+            const index = board.columns.findIndex(col => col.id == columnId);
+            if (index > -1) {
+                board.columns.splice(index, 1);
+                saveBoards();
+                renderBoard();
+            }
+        }
+
+        function moveColumnLeft(columnId) {
+            const board = boards.find(b => b.id === currentBoardId);
+            const index = board.columns.findIndex(col => col.id == columnId);
+            if (index > 0) {
+                [board.columns[index - 1], board.columns[index]] = [board.columns[index], board.columns[index - 1]];
+                saveBoards();
+                renderBoard();
+            }
+        }
+
+        function moveColumnRight(columnId) {
+            const board = boards.find(b => b.id === currentBoardId);
+            const index = board.columns.findIndex(col => col.id == columnId);
+            if (index < board.columns.length - 1) {
+                [board.columns[index], board.columns[index + 1]] = [board.columns[index + 1], board.columns[index]];
+                saveBoards();
+                renderBoard();
+            }
+        }
+
+        document.getElementById('addColumnBtn').onclick = addColumn;
+        document.getElementById('addBoardBtn').onclick = addBoard;
+
+        // Drag and Drop for Tasks
+        function onDragStart(event) {
+            event.dataTransfer.setData('text/plain', JSON.stringify({
+                taskId: event.target.dataset.taskId,
+                fromColumnId: event.target.dataset.columnId,
+            }));
+        }
+
+        function onDragOver(event) {
+            event.preventDefault();
+        }
+
+        function onDragEnter(event) {
+            event.currentTarget.classList.add('drag-over');
+        }
+
+        function onDragLeave(event) {
+            event.currentTarget.classList.remove('drag-over');
+        }
+
+        function onDrop(event) {
+            event.preventDefault();
+            const data = JSON.parse(event.dataTransfer.getData('text/plain'));
+            const toColumnId = event.currentTarget.dataset.columnId;
+            const board = boards.find(b => b.id === currentBoardId);
+            const fromColumn = board.columns.find(col => col.id == data.fromColumnId);
+            const toColumn = board.columns.find(col => col.id == toColumnId);
+
+            const taskIndex = fromColumn.tasks.findIndex(task => task.id == data.taskId);
+            const [movedTask] = fromColumn.tasks.splice(taskIndex, 1);
+
+            // Identify where in the column the drop occurred
+            const taskList = event.currentTarget;
+            const children = Array.from(taskList.children);
+            const dropY = event.clientY;
+
+            let insertIndex = children.length; // Default: end of list
+            for (let i = 0; i < children.length; i++) {
+                const box = children[i].getBoundingClientRect();
+                if (dropY < box.top + box.height / 2) {
+                    insertIndex = i;
+                    break;
+                }
+            }
+
+            toColumn.tasks.splice(insertIndex, 0, movedTask);
+            event.currentTarget.classList.remove('drag-over');
+            saveBoards();
+            renderBoard();
+        }
+
+        // Move Board Up/Down
+        function moveBoardUp(boardId) {
+            const index = boards.findIndex(b => b.id == boardId);
+            if (index > 0) {
+                [boards[index - 1], boards[index]] = [boards[index], boards[index - 1]];
+                saveBoards();
+                renderBoardList();
+                renderBoard();
+            }
+        }
+
+        function moveBoardDown(boardId) {
+            const index = boards.findIndex(b => b.id == boardId);
+            if (index < boards.length - 1) {
+                [boards[index], boards[index + 1]] = [boards[index + 1], boards[index]];
+                saveBoards();
+                renderBoardList();
+                renderBoard();
+            }
+        }
+
+        // Drag-and-Drop for Boards
+        function boardDragStart(event) {
+            event.dataTransfer.setData('text/plain', event.currentTarget.dataset.boardId);
+        }
+
+        function boardDragOver(event) {
+            event.preventDefault();
+        }
+
+        function boardDragEnter(event) {
+            event.currentTarget.classList.add('drag-over');
+        }
+
+        function boardDragLeave(event) {
+            event.currentTarget.classList.remove('drag-over');
+        }
+
+        function boardDrop(event) {
+            event.preventDefault();
+            const draggedBoardId = event.dataTransfer.getData('text/plain');
+            const targetBoardId = event.currentTarget.dataset.boardId;
+
+            const draggedIndex = boards.findIndex(b => b.id == draggedBoardId);
+            const targetIndex = boards.findIndex(b => b.id == targetBoardId);
+
+            if (draggedIndex !== -1 && targetIndex !== -1) {
+                const [removed] = boards.splice(draggedIndex, 1);
+                boards.splice(targetIndex, 0, removed);
+                saveBoards();
+                renderBoardList();
+                renderBoard();
+            }
+            event.currentTarget.classList.remove('drag-over');
+        }
+
+        function exportBoards() {
+            let dataToExport = boards;
+            let filename = 'boards.json';
+
+            if (encryptionKey) {
+                const confirmEncryptExport = confirm('You currently have an encryption key set. Do you want to export the boards unencrypted? (Choosing "Cancel" will export encrypted data)');
+                if (confirmEncryptExport) {
+                    // Export unencrypted
+                    dataToExport = boards;
+                    filename = 'boards_unencrypted.json';
+                } else {
+                    // Export encrypted
+                    const encrypted = encryptData(boards, encryptionKey);
+                    if (encrypted) {
+                        dataToExport = encrypted;
+                        filename = 'boards_encrypted.txt'; // Change extension for encrypted data
+                    } else {
+                        alert('Failed to encrypt data for export.');
+                        return;
+                    }
+                }
+            } else {
+                // No encryption key, export unencrypted by default
+                dataToExport = boards;
+                filename = 'boards.json';
+            }
+
+            const dataStr = typeof dataToExport === 'string' ? dataToExport : JSON.stringify(dataToExport, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+
+        function importBoards(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    let importedData = e.target.result;
+                    let parsedData;
+                    try {
+                        parsedData = JSON.parse(importedData);
+                        // If it parses as JSON, assume it's unencrypted
+                    } catch (jsonError) {
+                        // If it doesn't parse as JSON, assume it's encrypted
+                        const key = prompt('The imported file appears to be encrypted. Please enter the decryption key:');
+                        if (key) {
+                            const decrypted = decryptData(importedData, key);
+                            if (decrypted) {
+                                parsedData = decrypted;
+                                encryptionKey = key; // Keep the key for subsequent operations
+                            } else {
+                                alert('Failed to decrypt imported file with the provided key. Invalid file or incorrect key.');
+                                return;
+                            }
+                        } else {
+                            alert('Decryption key not provided. Cannot import encrypted file.');
+                            return;
+                        }
+                    }
+
+                    if (!Array.isArray(parsedData)) throw new Error("Invalid format");
+
+                    if (confirm("This will overwrite your current boards. Proceed?")) {
+                        boards = parsedData;
+                        currentBoardId = boards.length > 0 ? boards[0].id : null;
+                        saveBoards();
+                        renderBoardList();
+                        renderBoard();
+                        alert("Boards imported successfully!");
+                    }
+                } catch (error) {
+                    alert("Failed to import: " + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function clearLocalStorage() {
+            if (confirm('Are you sure you want to wipe all your board data? This cannot be undone.')) {
+                localStorage.removeItem('boards');
+                boards = [];
+                currentBoardId = null;
+                encryptionKey = null; // Clear the encryption key as well
+                createDefaultBoard(); // Re-create a default board immediately after wiping
+                renderBoardList();
+                renderBoard();
+                alert('All board data has been wiped.');
+            }
+        }
+
+        function toggleVisibilityByClass(className) {
+          const elements = document.getElementsByClassName(className);
+          for (let i = 0; i < elements.length; i++) {
+            elements[i].classList.toggle('hide-it');
+          }
+        }
+
+        function toggleGrayscale(element) {
+          const currentFilter = element.style.filter;
+          element.style.filter = currentFilter.includes('grayscale(100%)') ? 'none' : 'grayscale(100%)';
+        }
+
+        let currentThemeIndex = 0;
+        const themes = [
+            { // Monokai (Original)
+                '--background-color': '#272822',
+                '--foreground-color': '#F8F8F2',
+                '--column-background': '#3B3A32',
+                '--task-background': '#49483E',
+                '--highlight-color': '#A6E22E',
+                '--button-background': '#66D9EF',
+                '--button-hover-background': '#57C7E3',
+                '--delete-color': '#F92672',
+                '--move-btn-color': '#FD971F',
+                '--border-color': '#75715E',
+                '--editable-border': '#E6DB74'
+            },
+            { // Dracula
+                '--background-color': '#282a36',
+                '--foreground-color': '#f8f8f2',
+                '--column-background': '#44475a',
+                '--task-background': '#6272a4',
+                '--highlight-color': '#50fa7b',
+                '--button-background': '#8be9fd',
+                '--button-hover-background': '#67dafa',
+                '--delete-color': '#ff5555',
+                '--move-btn-color': '#ff79c6',
+                '--border-color': '#bd93f9',
+                '--editable-border': '#f1fa8c'
+            },
+            { // Solarized Light
+                '--background-color': '#fdf6e3',
+                '--foreground-color': '#657b83',
+                '--column-background': '#eee8d5',
+                '--task-background': '#fdf6e3',
+                '--highlight-color': '#859900',
+                '--button-background': '#268bd2',
+                '--button-hover-background': '#2a7fb3',
+                '--delete-color': '#dc322f',
+                '--move-btn-color': '#cb4b16',
+                '--border-color': '#93a1a1',
+                '--editable-border': '#b58900'
+            },
+            { // Nord
+                '--background-color': '#2e3440',
+                '--foreground-color': '#eceff4',
+                '--column-background': '#3b4252',
+                '--task-background': '#4c566a',
+                '--highlight-color': '#8fbcbb',
+                '--button-background': '#88c0d0',
+                '--button-hover-background': '#81acbb',
+                '--delete-color': '#bf616a',
+                '--move-btn-color': '#d08770',
+                '--border-color': '#4c566a',
+                '--editable-border': '#ebcb8b'
+            },
+            { // Gruvbox Dark
+                '--background-color': '#282828',
+                '--foreground-color': '#ebdbb2',
+                '--column-background': '#3c3836',
+                '--task-background': '#504945',
+                '--highlight-color': '#b8bb26',
+                '--button-background': '#83a598',
+                '--button-hover-background': '#799489',
+                '--delete-color': '#fb4934',
+                '--move-btn-color': '#fe8019',
+                '--border-color': '#665c54',
+                '--editable-border': '#d79921'
+            }
+        ];
+
+        function applyTheme(theme) {
+            const root = document.documentElement;
+            for (const [property, value] of Object.entries(theme)) {
+                root.style.setProperty(property, value);
+            }
+        }
+
+        function incrementThemeShift() {
+            currentThemeIndex = (currentThemeIndex + 1) % themes.length;
+            applyTheme(themes[currentThemeIndex]);
+        }
+
+        // Initial load
+        loadBoards();
+        renderBoardList();
+        renderBoard();
+
+        // Toggle button functionality
+        document.getElementById('toggleButton').addEventListener('click', () => {
+            toggleVisibilityByClass('column');
+        });
+    </script>
+</body>
+</html>

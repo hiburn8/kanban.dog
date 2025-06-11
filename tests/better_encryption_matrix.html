@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐶</text></svg>">
+    <title>woof</title>
+    <style>
+        /* Basic styling for the button */
+        .toggle-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        /* Monokai Color Scheme Variables */
+        :root {
+            --background-color: #272822;
+            --foreground-color: #F8F8F2;
+            --column-background: #3B3A32;
+            --task-background: #49483E;
+            --highlight-color: #A6E22E; /* Green */
+            --button-background: #66D9EF; /* Blue */
+            --button-hover-background: #57C7E3;
+            --delete-color: #F92672; /* Red */
+            --move-btn-color: #FD971F; /* Orange */
+            --border-color: #75715E;
+            --editable-border: #E6DB74; /* Yellow */
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: var(--background-color);
+            color: var(--foreground-color);
+        }
+        h1 {
+            text-align: center;
+            color: var(--highlight-color);
+        }
+        #boardContainer {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+        }
+        #boardList {
+            width: 200px;
+            margin-right: 20px;
+            background-color: var(--column-background);
+            padding: 10px;
+            border-radius: 3px;
+            overflow-y: auto;
+            max-height: fit-content;
+            flex-shrink: 0;
+        }
+        #boardList h2 {
+            color: var(--highlight-color);
+            margin-top: 0;
+        }
+        .board-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            cursor: pointer;
+            padding: 5px;
+        }
+        .board-item:hover {
+            background-color: #49483E;
+            border-radius: 3px;
+        }
+        .board-item.drag-over {
+            background-color: #49483E;
+            border-radius: 3px;
+        }
+        .board-item span {
+            flex-grow: 1;
+            word-break: break-word;
+            cursor: pointer;
+        }
+        .board-item .delete-btn {
+            margin-left: 5px;
+        }
+        #addBoardBtn {
+            background-color: var(--button-background);
+            color: var(--foreground-color);
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 3px;
+            width: 100%;
+        }
+        #addBoardBtn:hover {
+            background-color: var(--button-hover-background);
+        }
+        #addColumnBtn {
+            display: block;
+            margin: 5px auto 20px auto;
+            padding: 10px 20px;
+            background-color: var(--button-background);
+            color: var(--foreground-color);
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        #addColumnBtn:hover {
+            background-color: var(--button-hover-background);
+        }
+        .board {
+            flex-grow: 1;
+            display: flex;
+            align-items: flex-start;
+            overflow-x: auto;
+        }
+        .column {
+            background-color: var(--column-background);
+            border-radius: 3px;
+            width: 250px;
+            margin: 10px 10px;
+            padding: 10px;
+            flex-shrink: 0;
+            position: relative;
+        }
+        .column-header {
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--highlight-color);
+        }
+        .column-header span {
+            cursor: pointer;
+            word-break: break-word;
+        }
+        .task-list {
+            min-height: 50px;
+        }
+        .task {
+            background-color: var(--task-background);
+            border-radius: 3px;
+            padding: 10px;
+            margin-top: 10px;
+            cursor: move;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--foreground-color);
+        }
+        .task span {
+            flex-grow: 1;
+            cursor: pointer;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            overflow: hidden;
+        }
+        button {
+            background-color: var(--button-background);
+            border: none;
+            color: var(--foreground-color);
+            padding: 5px 10px;
+            margin-top: 5px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+        button:hover {
+            background-color: var(--button-hover-background);
+        }
+        .delete-btn {
+            background-color: transparent;
+            border: none;
+            color: var(--delete-color);
+            font-size: 16px;
+            cursor: pointer;
+            padding: 0 5px;
+        }
+        .delete-btn:hover {
+            color: #ff5f7f;
+        }
+        .move-btn {
+            background-color: transparent;
+            border: none;
+            color: var(--move-btn-color);
+            font-size: 16px;
+            cursor: pointer;
+            padding: 0 5px;
+        }
+        .move-btn:hover {
+            color: #e58a00;
+        }
+        .drag-over {
+            background-color: #3E3D32;
+        }
+        .task-buttons {
+            display: flex;
+            flex-shrink: 0;
+            align-items: center;
+        }
+        .arrow-btn {
+            background-color: transparent;
+            border: none;
+            color: var(--move-btn-color);
+            font-size: 16px;
+            cursor: pointer;
+            padding: 0 5px;
+        }
+        .arrow-btn:hover {
+            color: #e58a00;
+        }
+        .editable {
+            border-bottom: 1px solid var(--highlight-color);
+        }
+        .editable:focus {
+            outline: none;
+            border-bottom: 1px dashed var(--editable-border);
+        }
+        .selected-board {
+            background-color: #49483E;
+            border-radius: 3px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            #boardContainer {
+                flex-direction: column;
+            }
+            #boardList {
+                width: 100%;
+                margin-right: 0;
+                margin-bottom: 20px;
+            }
+            .board {
+                overflow-x: unset;
+                overflow-y: unset;
+                flex-wrap: wrap;
+            }
+            .column {
+                width: 100%;
+                margin: 10px 0;
+            }
+            .task {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .task-buttons {
+                margin-top: 5px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            button {
+                padding: 5px;
+            }
+            .column {
+                padding: 5px;
+            }
+            .column-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .column-header div {
+                margin-top: 5px;
+            }
+            .task {
+                padding: 5px;
+            }
+            .task-buttons {
+                flex-wrap: wrap;
+            }
+            .task-buttons button {
+                margin-top: 5px;
+            }
+            
+        }
+
+        .hide-it {
+            display: none;
+        }
+
+    </style>
+</head>
+<body>
+    <h1>🐶</h1>
+
+    <div id="boardContainer">
+        <div id="boardList">
+            <h2>Boards</h2>
+
+            <!-- Board items will be added here dynamically -->
+            <button id="addBoardBtn">Add Board</button>
+        <p>
+        <h2>Settings</h2>
+        
+        <button onclick="setEncryptionKey()" title="Set a key to encrypt data on save.">🔒 Encrypt</button>
+        <button onclick="decryptAndLoadBoards()" title="Enter key to load encrypted data.">🔓 Decrypt</button>
+
+        <button onclick="exportBoards()">📤 Save</button>
+        <input type="file" id="importFileInput" style="display: none;" accept=".json" onchange="importBoards(event)">
+        <button onclick="document.getElementById('importFileInput').click()">📥 Load</button>
+        
+        <button onclick="incrementThemeShift();" aria-label="Decorate">🌈</button>
+                
+        <button style="background-color: var(--delete-color)" onclick="clearLocalStorage()" aria-label="Delete my Data">💣 Wipe</button>
+        </div>
+        <div>
+            <button class="toggle-button" id="toggleButton">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><g xmlns="http://www.w3.org/2000/svg" transform="matrix(0 -1 1 0 0.5 23.5)"><path fill="var(--highlight-color)" d="M1.9166666666666667 19.166666666666668V12.458333333333334h8.625v6.708333333333334H1.9166666666666667Zm0 -8.625V3.8333333333333335h8.625v6.708333333333334H1.9166666666666667Zm1.4375 -1.4375h5.75v-3.8333333333333335H3.354166666666667v3.8333333333333335Zm14.231250000000001 10.0625 -4.456250000000001 -4.456250000000001 1.00625 -1.00625 2.73125 2.707291666666667V3.8333333333333335h1.4375v12.578125l2.73125 -2.707291666666667 1.00625 1.00625 -4.456250000000001 4.456250000000001Z" stroke-width="1"/></g></svg>
+            </button>
+        
+            <button id="addColumnBtn">Add Column</button>
+            <div id="board" class="board">
+                <!-- Columns will be added here dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let boards = [];
+        let currentBoardId = null;
+        let encryptionKey = null;
+
+        // --- Encryption/Decryption Functions ---
+
+        // Function to get a derived key from a password string and salt
+        async function getDerivedKey(password, salt) {
+            const encoder = new TextEncoder();
+            const keyMaterial = await window.crypto.subtle.importKey(
+                'raw',
+                encoder.encode(password),
+                { name: 'PBKDF2' },
+                false,
+                ['deriveKey']
+            );
+            return window.crypto.subtle.deriveKey(
+                {
+                    name: 'PBKDF2',
+                    salt: salt,
+                    iterations: 100000,
+                    hash: 'SHA-256'
+                },
+                keyMaterial,
+                { name: 'AES-GCM', length: 256 },
+                true,
+                ['encrypt', 'decrypt']
+            );
+        }
+
+        // Encrypts the board data object into a base64 string
+        async function encryptBoardsData(password, data) {
+            const salt = window.crypto.getRandomValues(new Uint8Array(16));
+            const iv = window.crypto.getRandomValues(new Uint8Array(12));
+            const derivedKey = await getDerivedKey(password, salt);
+            const encoder = new TextEncoder();
+            const encodedData = encoder.encode(JSON.stringify(data));
+
+            const encryptedContent = await window.crypto.subtle.encrypt(
+                { name: 'AES-GCM', iv: iv },
+                derivedKey,
+                encodedData
+            );
+
+            const bufferToBase64 = buffer => btoa(String.fromCharCode.apply(null, new Uint8Array(buffer)));
+
+            return `${bufferToBase64(salt)}:${bufferToBase64(iv)}:${bufferToBase64(encryptedContent)}`;
+        }
+
+        // Decrypts the base64 string back into a board data object
+        async function decryptBoardsData(password, encryptedString) {
+            const base64ToBuffer = base64 => Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+
+            const parts = encryptedString.split(':');
+            if (parts.length !== 3) {
+                throw new Error('Invalid encrypted data format.');
+            }
+            const [saltB64, ivB64, dataB64] = parts;
+
+            const salt = base64ToBuffer(saltB64);
+            const iv = base64ToBuffer(ivB64);
+            const data = base64ToBuffer(dataB64);
+
+            const derivedKey = await getDerivedKey(password, salt);
+            const decryptedContent = await window.crypto.subtle.decrypt(
+                { name: 'AES-GCM', iv: iv },
+                derivedKey,
+                data
+            );
+
+            const decoder = new TextDecoder();
+            const decryptedJson = decoder.decode(decryptedContent);
+            return JSON.parse(decryptedJson);
+        }
+
+        // Button click handler to set an encryption key
+        async function setEncryptionKey() {
+            const key = prompt('Enter an encryption key. This key will be used to save all subsequent changes. You will need it to decrypt your data later.');
+            if (key) {
+                encryptionKey = key;
+                alert('Encryption key set. All changes will now be encrypted.');
+                await saveBoards();
+            } else {
+                const removeKey = confirm('Do you want to disable encryption and save data as plain text?');
+                if (removeKey) {
+                    encryptionKey = null;
+                    alert('Encryption disabled. Data will be saved as plain text.');
+                    await saveBoards();
+                }
+            }
+        }
+        
+        // --- UI Text Scramble Animation ---
+        function animateTextScramble(element) {
+            const originalText = element.textContent;
+            const chars = '!<>-_\\/[]{}—=+*^?#________';
+            let frame = 0;
+            let frameRate = 0;
+            const animationSteps = 30; // How many frames the animation lasts
+            
+            const intervalId = setInterval(() => {
+                frame++;
+                let output = '';
+                for (let i = 0; i < originalText.length; i++) {
+                    // Determine how far along the reveal is for this character
+                    const revealProgress = Math.floor(frame * (originalText.length / animationSteps));
+                    
+                    if (i < revealProgress) {
+                        output += originalText[i];
+                    } else {
+                        // Add a random scramble character
+                        const randomChar = chars[Math.floor(Math.random() * chars.length)];
+                        output += randomChar;
+                    }
+                }
+                element.textContent = output;
+
+                if (frame >= animationSteps) {
+                    clearInterval(intervalId);
+                    element.textContent = originalText; // Ensure final text is correct
+                }
+            }, 30); // Frame update speed
+        }
+
+        function triggerAllAnimations() {
+            const elementsToAnimate = document.querySelectorAll('.board-item span.editable, .column-header span.editable, .task > span.editable');
+            
+            elementsToAnimate.forEach((el, index) => {
+                el.style.visibility = 'hidden';
+            });
+            
+            elementsToAnimate.forEach((el, index) => {
+                setTimeout(() => {
+                    el.style.visibility = 'visible';
+                    animateTextScramble(el);
+                }, index * 250);
+            });
+        }
+
+
+        // Button click handler to decrypt and load boards
+        async function decryptAndLoadBoards() {
+            const key = prompt('Enter the encryption key to load your boards:');
+            if (!key) {
+                alert('No key provided.');
+                return;
+            }
+
+            const savedBoards = localStorage.getItem('boards');
+            if (!savedBoards) {
+                alert('No saved board data found.');
+                return;
+            }
+
+            try {
+                const decryptedBoards = await decryptBoardsData(key, savedBoards);
+                
+                encryptionKey = key;
+                boards = decryptedBoards;
+
+                if (boards.length > 0) {
+                    currentBoardId = boards[0].id;
+                } else {
+                    currentBoardId = null;
+                    await createDefaultBoard(); 
+                }
+                
+                // Render the structure first
+                renderBoardList();
+                renderBoard();
+
+                // Then trigger the animation on the newly rendered elements
+                triggerAllAnimations();
+
+
+            } catch (e) {
+                console.error('Decryption failed:', e);
+                alert('Decryption failed. The key may be incorrect or the data corrupted.');
+            }
+        }
+
+
+        // Load boards from local storage or initialize default board
+        async function loadBoards() {
+            const savedBoards = localStorage.getItem('boards');
+            if (savedBoards) {
+                try {
+                    // Try to parse as JSON first (unencrypted)
+                    boards = JSON.parse(savedBoards);
+                    encryptionKey = null; // Data is not encrypted
+                    if (boards.length > 0) {
+                        if (!currentBoardId) {
+                            currentBoardId = boards[0].id;
+                        }
+                    } else {
+                        await createDefaultBoard();
+                    }
+                } catch (e) {
+                    // If JSON.parse fails, assume it's encrypted.
+                    // Per requirements, do nothing and show a blank board.
+                    // The user must use the 'Decrypt' button.
+                    console.log("Could not parse board data. It might be encrypted. Use the 'Decrypt' button to load.");
+                }
+            } else {
+                await createDefaultBoard();
+            }
+        }
+
+        async function createDefaultBoard() {
+            const defaultBoard = {
+                id: Date.now(),
+                name: 'Dog Tasks',
+                columns: [
+                    { id: 1, name: 'To Do', tasks:
+                        [
+                            {
+                                id: 1729265272977,
+                                name: 'Bark'
+                            },
+                            {
+                                id: 1729265289585,
+                                name: 'Chase tail'
+                            }
+                        ]
+                    },
+                    { id: 2, name: 'In Progress', tasks: [] },
+                    { id: 3, name: 'Done', tasks:
+                        [
+                            {
+                                id: 1729265164273,
+                                name: 'Make a Kanban'
+                            }
+                        ]
+                    },
+                ],
+            };
+            boards.push(defaultBoard);
+            currentBoardId = defaultBoard.id;
+            await saveBoards();
+        }
+
+        // Save boards to local storage, encrypting if a key is present
+        async function saveBoards() {
+            if (encryptionKey) {
+                try {
+                    const encryptedData = await encryptBoardsData(encryptionKey, boards);
+                    localStorage.setItem('boards', encryptedData);
+                } catch (error) {
+                    console.error("Encryption failed:", error);
+                    alert("Error: Could not save encrypted data.");
+                }
+            } else {
+                localStorage.setItem('boards', JSON.stringify(boards));
+            }
+        }
+
+        function renderBoardList() {
+            const boardList = document.getElementById('boardList');
+            const existingItems = boardList.querySelectorAll('.board-item');
+            existingItems.forEach(item => item.remove());
+
+            boards.forEach((board, index) => {
+                const boardItem = document.createElement('div');
+                boardItem.className = 'board-item';
+                if (board.id === currentBoardId) {
+                    boardItem.classList.add('selected-board');
+                }
+
+                boardItem.dataset.boardId = board.id;
+                boardItem.draggable = true;
+                boardItem.ondragstart = boardDragStart;
+                boardItem.ondragover = boardDragOver;
+                boardItem.ondragenter = boardDragEnter;
+                boardItem.ondragleave = boardDragLeave;
+                boardItem.ondrop = boardDrop;
+
+                const boardName = document.createElement('span');
+                boardName.textContent = board.name;
+                boardName.className = 'editable';
+                boardName.contentEditable = false; // Not editable by default
+
+                boardName.onblur = async () => {
+                    await updateBoardName(board.id, boardName.textContent.trim());
+                    boardName.contentEditable = false;
+                };
+
+                boardName.onkeydown = (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        boardName.blur();
+                    }
+                };
+
+                const buttonsContainer = document.createElement('div');
+                buttonsContainer.style.display = 'flex';
+                buttonsContainer.style.alignItems = 'center';
+
+                const moveUpBtn = document.createElement('button');
+                moveUpBtn.textContent = '↑';
+                moveUpBtn.className = 'arrow-btn';
+                moveUpBtn.onclick = async (e) => { e.stopPropagation(); await moveBoardUp(board.id); };
+                if (index === 0) {
+                    moveUpBtn.disabled = true;
+                    moveUpBtn.style.visibility = 'hidden';
+                    moveUpBtn.style.cursor = 'default';
+                }
+
+                const moveDownBtn = document.createElement('button');
+                moveDownBtn.textContent = '↓';
+                moveDownBtn.className = 'arrow-btn';
+                moveDownBtn.onclick = async (e) => { e.stopPropagation(); await moveBoardDown(board.id); };
+                if (index === boards.length - 1) {
+                    moveDownBtn.disabled = true;
+                    moveDownBtn.style.visibility = 'hidden';
+                    moveDownBtn.style.cursor = 'default';
+                }
+
+                const deleteBoardBtn = document.createElement('button');
+                deleteBoardBtn.textContent = 'X';
+                deleteBoardBtn.className = 'delete-btn';
+                deleteBoardBtn.onclick = async (e) => {
+                    e.stopPropagation();
+                    await deleteBoard(board.id);
+                };
+
+                buttonsContainer.appendChild(moveUpBtn);
+                buttonsContainer.appendChild(moveDownBtn);
+                buttonsContainer.appendChild(deleteBoardBtn);
+
+                boardItem.appendChild(boardName);
+                boardItem.appendChild(buttonsContainer);
+
+                boardItem.onclick = () => {
+                    if (board.id !== currentBoardId) {
+                        selectBoard(board.id);
+                    } else {
+                        // Board is already selected, make the name editable
+                        boardName.contentEditable = true;
+                        boardName.focus();
+                    }
+                };
+
+                boardList.insertBefore(boardItem, document.getElementById('addBoardBtn'));
+            });
+        }
+
+        function selectBoard(boardId) {
+            currentBoardId = boardId;
+            renderBoardList();
+            renderBoard();
+        }
+
+        async function updateBoardName(boardId, newName) {
+            if (newName === '') {
+                alert('Board name cannot be empty.');
+                renderBoardList();
+                return;
+            }
+            const board = boards.find(b => b.id === boardId);
+            if (board) {
+                board.name = newName;
+                await saveBoards();
+                renderBoardList();
+            }
+        }
+
+        async function addBoard() {
+            const boardName = prompt('Enter board name:');
+            if (boardName) {
+                const newBoard = {
+                    id: Date.now(),
+                    name: boardName,
+                    columns: [],
+                };
+                boards.push(newBoard);
+                currentBoardId = newBoard.id;
+                await saveBoards();
+                renderBoardList();
+                renderBoard();
+            }
+        }
+
+        async function deleteBoard(boardId) {
+            if (boards.length === 1) {
+                alert('You must have at least one board.');
+                return;
+            }
+            const index = boards.findIndex(b => b.id === boardId);
+            if (index > -1) {
+                boards.splice(index, 1);
+                if (currentBoardId === boardId) {
+                    currentBoardId = boards[0].id;
+                }
+                await saveBoards();
+                renderBoardList();
+                renderBoard();
+            }
+        }
+
+        function renderBoard() {
+            const board = boards.find(b => b.id === currentBoardId);
+            if (!board) return;
+
+            const boardDiv = document.getElementById('board');
+            boardDiv.innerHTML = '';
+            const columns = board.columns;
+
+            columns.forEach((column, columnIndex) => {
+                const columnDiv = document.createElement('div');
+                columnDiv.className = 'column';
+                columnDiv.dataset.columnId = column.id;
+
+                const header = document.createElement('div');
+                header.className = 'column-header';
+
+                const headerTitle = document.createElement('span');
+                headerTitle.textContent = column.name;
+                headerTitle.className = 'editable';
+                headerTitle.contentEditable = true;
+                headerTitle.onblur = async () => await updateColumnName(column.id, headerTitle.textContent.trim());
+                headerTitle.onkeydown = (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        headerTitle.blur();
+                    }
+                };
+
+                const headerButtons = document.createElement('div');
+
+                const moveLeftBtn = document.createElement('button');
+                moveLeftBtn.textContent = '←';
+                moveLeftBtn.className = 'move-btn';
+                moveLeftBtn.onclick = async () => await moveColumnLeft(column.id);
+                if (columnIndex === 0) {
+                    moveLeftBtn.disabled = true;
+                    moveLeftBtn.style.visibility = 'hidden';
+                    moveLeftBtn.style.cursor = 'default';
+                }
+
+                const moveRightBtn = document.createElement('button');
+                moveRightBtn.textContent = '→';
+                moveRightBtn.className = 'move-btn';
+                moveRightBtn.onclick = async () => await moveColumnRight(column.id);
+                if (columnIndex === columns.length - 1) {
+                    moveRightBtn.disabled = true;
+                    moveRightBtn.style.visibility = 'hidden';
+                    moveRightBtn.style.cursor = 'default';
+                }
+
+                const deleteColumnBtn = document.createElement('button');
+                deleteColumnBtn.textContent = 'X';
+                deleteColumnBtn.className = 'delete-btn';
+                deleteColumnBtn.onclick = async () => await deleteColumn(column.id);
+
+                headerButtons.appendChild(moveLeftBtn);
+                headerButtons.appendChild(moveRightBtn);
+                headerButtons.appendChild(deleteColumnBtn);
+
+                header.appendChild(headerTitle);
+                header.appendChild(headerButtons);
+
+                const addTaskBtn = document.createElement('button');
+                addTaskBtn.textContent = 'Add Task';
+                addTaskBtn.onclick = async () => await addTask(column.id);
+
+                const taskList = document.createElement('div');
+                taskList.className = 'task-list';
+                taskList.dataset.columnId = column.id;
+                taskList.ondrop = onDrop;
+                taskList.ondragover = onDragOver;
+                taskList.ondragenter = onDragEnter;
+                taskList.ondragleave = onDragLeave;
+
+                column.tasks.forEach((task, taskIndex) => {
+                    const taskDiv = document.createElement('div');
+                    taskDiv.className = 'task';
+                    taskDiv.draggable = true;
+                    taskDiv.dataset.taskId = task.id;
+                    taskDiv.dataset.columnId = column.id;
+                    taskDiv.ondragstart = onDragStart;
+
+                    const taskContent = document.createElement('span');
+                    taskContent.textContent = task.name;
+                    taskContent.className = 'editable';
+                    taskContent.contentEditable = true;
+                    taskContent.onblur = async () => await updateTaskName(column.id, task.id, taskContent.textContent.trim());
+                    taskContent.onkeydown = (e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            taskContent.blur();
+                        }
+                    };
+
+                    const deleteTaskBtn = document.createElement('button');
+                    deleteTaskBtn.textContent = 'X';
+                    deleteTaskBtn.className = 'delete-btn';
+                    deleteTaskBtn.onclick = async () => await deleteTask(column.id, task.id);
+
+                    const upArrowBtn = document.createElement('button');
+                    upArrowBtn.textContent = '↑';
+                    upArrowBtn.className = 'arrow-btn';
+                    upArrowBtn.onclick = async () => await moveTaskUp(column.id, task.id);
+                    if (taskIndex === 0) {
+                        upArrowBtn.disabled = true;
+                        upArrowBtn.style.visibility = 'hidden';
+                        upArrowBtn.style.cursor = 'default';
+                    }
+
+                    const downArrowBtn = document.createElement('button');
+                    downArrowBtn.textContent = '↓';
+                    downArrowBtn.className = 'arrow-btn';
+                    downArrowBtn.onclick = async () => await moveTaskDown(column.id, task.id);
+                    if (taskIndex === column.tasks.length - 1) {
+                        downArrowBtn.disabled = true;
+                        downArrowBtn.style.visibility = 'hidden';
+                        downArrowBtn.style.cursor = 'default';
+                    }
+
+                    const taskButtonsContainer = document.createElement('div');
+                    taskButtonsContainer.className = 'task-buttons';
+                    
+                    const clockButton = document.createElement('button');
+                    clockButton.innerHTML = '⏰';
+                    clockButton.title = 'Show created time';
+                    clockButton.style.display = 'none';
+                    clockButton.style.background = 'transparent';
+                    clockButton.style.border = 'none';
+                    clockButton.style.color = 'var(--highlight-color)';
+                    clockButton.style.cursor = 'pointer';
+                    clockButton.style.fontSize = '16px';
+                    clockButton.onclick = () => {
+                        const createdTime = new Date(Number(task.id));
+                        alert(`Created at: ${createdTime.toLocaleString()}`);
+                    };
+
+                    taskButtonsContainer.appendChild(upArrowBtn);
+                    taskButtonsContainer.appendChild(downArrowBtn);
+                    taskButtonsContainer.appendChild(clockButton);
+                    taskButtonsContainer.appendChild(deleteTaskBtn);
+
+                    taskDiv.appendChild(taskContent);
+                    taskDiv.appendChild(taskButtonsContainer);
+
+                    taskList.appendChild(taskDiv);
+                });
+
+                columnDiv.appendChild(header);
+                columnDiv.appendChild(addTaskBtn);
+                columnDiv.appendChild(taskList);
+
+                boardDiv.appendChild(columnDiv);
+            });
+        }
+
+        async function updateTaskName(columnId, taskId, newName) {
+            if (newName === '') {
+                alert('Task name cannot be empty.');
+                renderBoard();
+                return;
+            }
+            const board = boards.find(b => b.id === currentBoardId);
+            const column = board.columns.find(col => col.id == columnId);
+            const task = column.tasks.find(task => task.id == taskId);
+            if (task) {
+                task.name = newName;
+                await saveBoards();
+            }
+        }
+
+        async function updateColumnName(columnId, newName) {
+            if (newName === '') {
+                alert('Column name cannot be empty.');
+                renderBoard();
+                return;
+            }
+            const board = boards.find(b => b.id === currentBoardId);
+            const column = board.columns.find(col => col.id == columnId);
+            if (column) {
+                column.name = newName;
+                await saveBoards();
+            }
+        }
+
+        async function addTask(columnId) {
+            const taskName = prompt('Enter task name:');
+            if (taskName) {
+                const board = boards.find(b => b.id === currentBoardId);
+                const column = board.columns.find(col => col.id == columnId);
+                const newTask = { id: Date.now(), name: taskName };
+                column.tasks.push(newTask);
+                await saveBoards();
+                renderBoard();
+            }
+        }
+
+        async function deleteTask(columnId, taskId) {
+            const board = boards.find(b => b.id === currentBoardId);
+            const column = board.columns.find(col => col.id == columnId);
+            const index = column.tasks.findIndex(task => task.id == taskId);
+            if (index > -1) {
+                column.tasks.splice(index, 1);
+                await saveBoards();
+                renderBoard();
+            }
+        }
+
+        async function moveTaskUp(columnId, taskId) {
+            const board = boards.find(b => b.id === currentBoardId);
+            const column = board.columns.find(col => col.id == columnId);
+            const index = column.tasks.findIndex(task => task.id == taskId);
+            if (index > 0) {
+                [column.tasks[index - 1], column.tasks[index]] = [column.tasks[index], column.tasks[index - 1]];
+                await saveBoards();
+                renderBoard();
+            }
+        }
+
+        async function moveTaskDown(columnId, taskId) {
+            const board = boards.find(b => b.id === currentBoardId);
+            const column = board.columns.find(col => col.id == columnId);
+            const index = column.tasks.findIndex(task => task.id == taskId);
+            if (index < column.tasks.length - 1) {
+                [column.tasks[index], column.tasks[index + 1]] = [column.tasks[index + 1], column.tasks[index]];
+                await saveBoards();
+                renderBoard();
+            }
+        }
+
+        async function addColumn() {
+            const columnName = prompt('Enter column name:');
+            if (columnName) {
+                const board = boards.find(b => b.id === currentBoardId);
+                const newColumn = { id: Date.now(), name: columnName, tasks: [] };
+                board.columns.push(newColumn);
+                await saveBoards();
+                renderBoard();
+            }
+        }
+
+        async function deleteColumn(columnId) {
+            const board = boards.find(b => b.id === currentBoardId);
+            const index = board.columns.findIndex(col => col.id == columnId);
+            if (index > -1) {
+                board.columns.splice(index, 1);
+                await saveBoards();
+                renderBoard();
+            }
+        }
+
+        async function moveColumnLeft(columnId) {
+            const board = boards.find(b => b.id === currentBoardId);
+            const index = board.columns.findIndex(col => col.id == columnId);
+            if (index > 0) {
+                [board.columns[index - 1], board.columns[index]] = [board.columns[index], board.columns[index - 1]];
+                await saveBoards();
+                renderBoard();
+            }
+        }
+
+        async function moveColumnRight(columnId) {
+            const board = boards.find(b => b.id === currentBoardId);
+            const index = board.columns.findIndex(col => col.id == columnId);
+            if (index < board.columns.length - 1) {
+                [board.columns[index], board.columns[index + 1]] = [board.columns[index + 1], board.columns[index]];
+                await saveBoards();
+                renderBoard();
+            }
+        }
+
+        document.getElementById('addColumnBtn').onclick = addColumn;
+        document.getElementById('addBoardBtn').onclick = addBoard;
+
+        // Drag and Drop for Tasks
+        function onDragStart(event) {
+            event.dataTransfer.setData('text/plain', JSON.stringify({
+                taskId: event.target.dataset.taskId,
+                fromColumnId: event.target.dataset.columnId,
+            }));
+        }
+
+        function onDragOver(event) {
+            event.preventDefault();
+        }
+
+        function onDragEnter(event) {
+            event.currentTarget.classList.add('drag-over');
+        }
+
+        function onDragLeave(event) {
+            event.currentTarget.classList.remove('drag-over');
+        }
+
+        async function onDrop(event) {
+            event.preventDefault();
+            const data = JSON.parse(event.dataTransfer.getData('text/plain'));
+            const toColumnId = event.currentTarget.dataset.columnId;
+            const board = boards.find(b => b.id === currentBoardId);
+            const fromColumn = board.columns.find(col => col.id == data.fromColumnId);
+            const toColumn = board.columns.find(col => col.id == toColumnId);
+
+            const taskIndex = fromColumn.tasks.findIndex(task => task.id == data.taskId);
+            const [movedTask] = fromColumn.tasks.splice(taskIndex, 1);
+
+            // Identify where in the column the drop occurred
+            const taskList = event.currentTarget;
+            const children = Array.from(taskList.children);
+            const dropY = event.clientY;
+
+            let insertIndex = children.length; // Default: end of list
+
+            for (let i = 0; i < children.length; i++) {
+                const box = children[i].getBoundingClientRect();
+                if (dropY < box.top + box.height / 2) {
+                    insertIndex = i;
+                    break;
+                }
+            }
+
+            toColumn.tasks.splice(insertIndex, 0, movedTask);
+            event.currentTarget.classList.remove('drag-over');
+            await saveBoards();
+            renderBoard();
+        }
+
+        // Move Board Up/Down
+        async function moveBoardUp(boardId) {
+            const index = boards.findIndex(b => b.id == boardId);
+            if (index > 0) {
+                [boards[index - 1], boards[index]] = [boards[index], boards[index - 1]];
+                await saveBoards();
+                renderBoardList();
+            }
+        }
+
+        async function moveBoardDown(boardId) {
+            const index = boards.findIndex(b => b.id == boardId);
+            if (index < boards.length - 1) {
+                [boards[index], boards[index + 1]] = [boards[index + 1], boards[index]];
+                await saveBoards();
+                renderBoardList();
+            }
+        }
+
+        // Drag and Drop for Boards
+        let draggedBoardId = null;
+
+        function boardDragStart(event) {
+            draggedBoardId = event.target.dataset.boardId;
+            event.dataTransfer.setData('text/plain', draggedBoardId);
+        }
+
+        function boardDragOver(event) {
+            event.preventDefault();
+        }
+
+        function boardDragEnter(event) {
+            const target = event.target.closest('.board-item');
+            if (target) {
+                target.classList.add('drag-over');
+            }
+        }
+
+        function boardDragLeave(event) {
+            const target = event.target.closest('.board-item');
+            if (target) {
+                target.classList.remove('drag-over');
+            }
+        }
+
+        async function boardDrop(event) {
+            event.preventDefault();
+            const targetItem = event.target.closest('.board-item');
+            if (targetItem) {
+                targetItem.classList.remove('drag-over');
+                const droppedOnBoardId = targetItem.dataset.boardId;
+                const draggedIndex = boards.findIndex(b => b.id == draggedBoardId);
+                const droppedOnIndex = boards.findIndex(b => b.id == droppedOnBoardId);
+
+                if (draggedIndex !== -1 && droppedOnIndex !== -1) {
+                    const [draggedBoard] = boards.splice(draggedIndex, 1);
+                    boards.splice(droppedOnIndex, 0, draggedBoard);
+                    await saveBoards();
+                    renderBoardList();
+                }
+            }
+        }
+
+        // Import/Export and other settings
+        function exportBoards() {
+            const dataStr = JSON.stringify(boards, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+            const exportFileDefaultName = `boards-${Date.now()}.json`;
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+        }
+
+        async function importBoards(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const importedBoards = JSON.parse(e.target.result);
+                        if (Array.isArray(importedBoards)) {
+                            boards = importedBoards;
+                            currentBoardId = boards.length > 0 ? boards[0].id : null;
+                            await saveBoards();
+                            renderBoardList();
+                            renderBoard();
+                        } else {
+                            alert('Invalid file format.');
+                        }
+                    } catch (error) {
+                        alert('Error reading or parsing file.');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function clearLocalStorage() {
+            if (confirm('Are you sure you want to delete all your boards? This action cannot be undone.')) {
+                localStorage.clear();
+                boards = [];
+                currentBoardId = null;
+                location.reload();
+            }
+        }
+
+        // Sidebar Toggle
+        const toggleButton = document.getElementById('toggleButton');
+        const boardList = document.getElementById('boardList');
+        toggleButton.addEventListener('click', () => {
+            boardList.classList.toggle('hide-it');
+            toggleButton.style.transform = boardList.classList.contains('hide-it') ? 'rotate(180deg)' : 'rotate(0deg)';
+        });
+
+        function incrementThemeShift() {
+            const root = document.documentElement;
+            const currentFilter = getComputedStyle(root).getPropertyValue('--highlight-color');
+            let hueRotate = 0;
+            if (currentFilter.includes('hue-rotate')) {
+                hueRotate = parseInt(currentFilter.split('(')[1].split('deg)')[0]);
+            }
+            const newHueRotate = (hueRotate + 30) % 360;
+            const filterValue = `hue-rotate(${newHueRotate}deg)`;
+            root.style.setProperty('--highlight-color', '#A6E22E ' + filterValue);
+            root.style.setProperty('--button-background', '#66D9EF ' + filterValue);
+            root.style.setProperty('--delete-color', '#F92672 ' + filterValue);
+            root.style.setProperty('--move-btn-color', '#FD971F ' + filterValue);
+            root.style.setProperty('--editable-border', '#E6DB74 ' + filterValue);
+        }
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadBoards();
+            renderBoardList();
+            renderBoard();
+        });
+    </script>
+</body>
+</html>

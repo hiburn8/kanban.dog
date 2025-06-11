@@ -1,0 +1,110 @@
+[
+  {
+    "id": 1749675016475,
+    "name": "Tutorial.",
+    "columns": [
+      {
+        "id": 1749675026082,
+        "name": "Todo",
+        "tasks": [
+          {
+            "id": 1749677361270,
+            "name": "This is a task."
+          },
+          {
+            "id": 1749675114198,
+            "name": "The 'Todo' bucket is your backlog of tasks."
+          },
+          {
+            "id": 1749677887570,
+            "name": "You can reorder their priority with arrows or dragging."
+          }
+        ]
+      },
+      {
+        "id": 1749675052770,
+        "name": "Doing",
+        "tasks": [
+          {
+            "id": 1749675236738,
+            "name": "The 'Doing' bucket is for tasks you're already working on."
+          }
+        ]
+      },
+      {
+        "id": 1749675054826,
+        "name": "Finished",
+        "tasks": [
+          {
+            "id": 1749675253410,
+            "name": "Put tasks here when they're done."
+          },
+          {
+            "id": 1749677081957,
+            "name": "Try dragging the tasks from 'Todo' into 'Doing'."
+          },
+          {
+            "id": 1749678187548,
+            "name": "Buckets titled 'Done' will strike out tasks and hide them if older than 30 days. Try renaming this bucket to 'Done'."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 1749674217490,
+    "name": "Info.",
+    "columns": [
+      {
+        "id": 2,
+        "name": "SECURITY",
+        "tasks": [
+          {
+            "id": 1749675311314,
+            "name": "All data is stored on your machine in the Browser. Only you can see it."
+          },
+          {
+            "id": 1749675821280,
+            "name": "You can additionally encrypt the data with a password. You'll need to press 'Decrypt' and re-enter this password every time you revisit thereafter."
+          },
+          {
+            "id": 1749675710670,
+            "name": "There are no external dependencies. No code libraries, frameworks, fonts or images."
+          },
+          {
+            "id": 1749675749098,
+            "name": "In-fact (aside from fetching this webpage) no network requests are made."
+          }
+        ]
+      },
+      {
+        "id": 1,
+        "name": "WARNINGS",
+        "tasks": [
+          {
+            "id": 1749674557357,
+            "name": "If you forget the password while your data is visible, you can just re-encrypt it with a new password."
+          },
+          {
+            "id": 1749676230659,
+            "name": "If you forget it while the data isn't loaded, you CANNOT GET IT BACK!"
+          },
+          {
+            "id": 1749679083306,
+            "name": "'💣 Wipe' does exactly what it sounds like."
+          }
+        ]
+      },
+      {
+        "id": 1749678949898,
+        "name": "Why Kanban.dog?",
+        "tasks": [
+          {
+            "id": 1749678967146,
+            "name": "The TLD is cheap."
+          }
+        ]
+      }
+    ]
+  }
+]
