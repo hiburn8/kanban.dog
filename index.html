@@ -278,6 +278,10 @@
         .hide-it {
             display: none;
         }
+        .strike-through {
+            text-decoration: line-through;
+            opacity: 0.7;
+        }
     </style>
 </head>
 <body>
@@ -345,7 +349,7 @@
                         },
                         {
                             id: 1729265289585,
-                            name: 'Chase tail'
+                            name: 'Wag tail'
                         }
                       ]
                     },
@@ -598,6 +602,12 @@
                     const taskContent = document.createElement('span');
                     taskContent.textContent = task.name;
                     taskContent.className = 'editable';
+                    
+                    // Apply strike-through if column name is 'Done'
+                    if (column.name.toLowerCase() === 'done') {
+                        taskContent.classList.add('strike-through');
+                    }
+
                     taskContent.contentEditable = true;
                     taskContent.onblur = () => updateTaskName(column.id, task.id, taskContent.textContent.trim());
                     taskContent.onkeydown = (e) => {
@@ -694,6 +704,7 @@
             if (column) {
                 column.name = newName;
                 saveBoards();
+                renderBoard(); // <-- This line forces the UI update
             }
         }
 
